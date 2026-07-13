@@ -2,11 +2,14 @@ package com.aperture
 
 import android.app.Activity
 import android.app.AlarmManager
+import android.app.AppOpsManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.OpenableColumns
 import android.provider.Settings
@@ -15,6 +18,7 @@ import com.facebook.react.bridge.*
 import com.aperture.alarm.AlarmController
 import com.aperture.data.*
 import com.aperture.gate.GateActivity
+import com.aperture.gate.GateGuardianService
 import com.aperture.gate.SessionFinalizer
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -58,10 +62,86 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                     if (Build.VERSION.SDK_INT >= 31) alarmManager.canScheduleExactAlarms() else true)
                 putBoolean("screenPinningInstructionsSeen",
                     runBlocking { settingsRepo.read().screenPinningInstructionsSeen })
+                putBoolean("accessibilityServiceEnabled", isAccessibilityServiceEnabled())
+                putBoolean("usageAccessGranted", isUsageAccessGranted())
+                putBoolean("isIgnoringBatteryOptimizations", isIgnoringBatteryOptimizations())
+                putBoolean("canDrawOverlays", Settings.canDrawOverlays(reactApplicationContext))
             }
             promise.resolve(map)
         } catch (e: Exception) {
             promise.reject("GET_CAPABILITIES_FAILED", e.message, e)
+        }
+    }
+
+    private fun isIgnoringBatteryOptimizations(): Boolean {
+        val powerManager = reactApplicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+        return powerManager.isIgnoringBatteryOptimizations(reactApplicationContext.packageName)
+    }
+
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val expectedComponentName = ComponentName(reactApplicationContext, GateGuardianService::class.java)
+        val enabledServices = Settings.Secure.getString(reactApplicationContext.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        return enabledServices?.contains(expectedComponentName.flattenToString()) ?: false
+    }
+
+    private fun isUsageAccessGranted(): Boolean {
+        val appOps = reactApplicationContext.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), reactApplicationContext.packageName)
+        } else {
+            @Suppress("DEPRECATION")
+            appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), reactApplicationContext.packageName)
+        }
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    @ReactMethod
+    fun openAccessibilitySettings() {
+        try {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            reactApplicationContext.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open accessibility settings", e)
+        }
+    }
+
+    @ReactMethod
+    fun openUsageAccessSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            reactApplicationContext.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open usage access settings", e)
+        }
+    }
+
+    @ReactMethod
+    fun requestIgnoreBatteryOptimizations() {
+        try {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:${reactApplicationContext.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            reactApplicationContext.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to request ignore battery optimizations", e)
+        }
+    }
+
+    @ReactMethod
+    fun openOverlaySettings() {
+        try {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                data = Uri.parse("package:${reactApplicationContext.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            reactApplicationContext.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open overlay settings", e)
         }
     }
 
@@ -434,11 +514,9 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
 
                 val enabledMap = mutableMapOf<String, Boolean>()
                 val iterator = enabledMapObj.entryIterator
-                if (iterator != null) {
-                    while (iterator.hasNext()) {
-                        val entry = iterator.next()
-                        enabledMap[entry.key] = entry.value as Boolean
-                    }
+                while (iterator.hasNext()) {
+                    val entry = iterator.next()
+                    enabledMap[entry.key] = entry.value as Boolean
                 }
 
                 musicRepo.updateMusicLibrary(enabledMap, shuffle)
@@ -560,7 +638,10 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                 if (session != null && session.status == "gate_active" &&
                     SystemClock.elapsedRealtime() < session.endAtElapsedMs) {
                     val intent = Intent(reactApplicationContext, GateActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or 
+                                 Intent.FLAG_ACTIVITY_CLEAR_TOP or 
+                                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                                 Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                     }
                     reactApplicationContext.startActivity(intent)
                     promise.resolve(true)
@@ -589,7 +670,7 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
 
     @ReactMethod
     fun stopPinning(promise: Promise) {
-        val activity = getCurrentActivity()
+        val activity = reactApplicationContext.currentActivity
         if (activity != null) {
             com.aperture.gate.ScreenPinningController.stopPinning(activity)
             promise.resolve(null)

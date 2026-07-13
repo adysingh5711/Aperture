@@ -31,6 +31,10 @@ export default function TodayScreen() {
   
   // Capabilities
   const [canScheduleAlarms, setCanScheduleAlarms] = useState(true);
+  const [accessibilityEnabled, setAccessibilityEnabled] = useState(true);
+  const [usageAccessGranted, setUsageAccessGranted] = useState(true);
+  const [isIgnoringBattery, setIsIgnoringBattery] = useState(true);
+  const [canDrawOverlays, setCanDrawOverlays] = useState(true);
 
   // Neutral insight (only shown once enough data exists)
   const [insight, setInsight] = useState<string | null>(null);
@@ -40,6 +44,10 @@ export default function TodayScreen() {
     try {
       const caps = await ApertureModule.getCapabilities();
       setCanScheduleAlarms(caps.canScheduleExactAlarms);
+      setAccessibilityEnabled(caps.accessibilityServiceEnabled);
+      setUsageAccessGranted(caps.usageAccessGranted);
+      setIsIgnoringBattery(caps.isIgnoringBatteryOptimizations);
+      setCanDrawOverlays(caps.canDrawOverlays);
 
       const settings = await ApertureModule.getSettings();
       setWaitMinutes(settings.defaultWaitingDurationMinutes);
@@ -298,6 +306,66 @@ export default function TodayScreen() {
             onPress={() => ApertureModule.openExactAlarmSettings()}
           >
             <Text style={styles.bannerAlertBtnText}>Open Settings</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Accessibility Service Banner */}
+      {!accessibilityEnabled && (
+        <View style={styles.bannerAlert}>
+          <Text style={styles.bannerAlertText}>
+            Accessibility Service is required to enforce the lockout and prevent app switching.
+          </Text>
+          <TouchableOpacity
+            style={styles.bannerAlertBtn}
+            onPress={() => ApertureModule.openAccessibilitySettings()}
+          >
+            <Text style={styles.bannerAlertBtnText}>Enable Service</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Usage Access Banner */}
+      {!usageAccessGranted && (
+        <View style={styles.bannerAlert}>
+          <Text style={styles.bannerAlertText}>
+            Usage Access allows Aperture to detect when other apps are opened during a gate.
+          </Text>
+          <TouchableOpacity
+            style={styles.bannerAlertBtn}
+            onPress={() => ApertureModule.openUsageAccessSettings()}
+          >
+            <Text style={styles.bannerAlertBtnText}>Grant Access</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Battery Optimization Banner */}
+      {!isIgnoringBattery && (
+        <View style={styles.bannerAlert}>
+          <Text style={styles.bannerAlertText}>
+            Disable battery optimization to prevent the system from killing Aperture in the background.
+          </Text>
+          <TouchableOpacity
+            style={styles.bannerAlertBtn}
+            onPress={() => ApertureModule.requestIgnoreBatteryOptimizations()}
+          >
+            <Text style={styles.bannerAlertBtnText}>Disable</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Overlay Permission Banner */}
+      {!canDrawOverlays && (
+        <View style={styles.bannerAlert}>
+          <Text style={styles.bannerAlertText}>
+            Overlay permission is required to launch the gate screen over other apps.
+          </Text>
+          <TouchableOpacity
+            style={styles.bannerAlertBtn}
+            onPress={() => ApertureModule.openOverlaySettings()}
+          >
+            <Text style={styles.bannerAlertBtnText}>Grant Access</Text>
           </TouchableOpacity>
         </View>
       )}

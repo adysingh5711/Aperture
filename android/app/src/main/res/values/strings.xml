@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Aperture</string>
+    <string name="accessibility_description">Enforces the focus gate by preventing app switching during active sessions.</string>
+    <string name="fgs_special_use_description">Enforces focus gate commitment by monitoring foreground app state.</string>
 </resources>

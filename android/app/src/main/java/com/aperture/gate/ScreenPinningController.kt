@@ -6,7 +6,16 @@ import android.content.Context
 object ScreenPinningController {
     fun requestPinning(activity: Activity) {
         try {
-            activity.startLockTask()
+            val am = activity.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            val isPinned = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                am.lockTaskModeState != android.app.ActivityManager.LOCK_TASK_MODE_NONE
+            } else {
+                @Suppress("DEPRECATION")
+                am.isInLockTaskMode
+            }
+            if (!isPinned) {
+                activity.startLockTask()
+            }
         } catch (e: Exception) {
             // Handled gracefully if not supported/allowed by OS config
         }

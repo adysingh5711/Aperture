@@ -1,6 +1,7 @@
 package com.aperture.gate
 
 import android.app.ActivityManager
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -13,6 +14,7 @@ import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.view.animation.CycleInterpolator
 import android.view.animation.TranslateAnimation
 import android.widget.Button
@@ -20,6 +22,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.view.WindowCompat
 import com.aperture.R
 import com.aperture.alarm.EndGateReceiver
 import com.aperture.data.ActiveSession
@@ -80,7 +83,28 @@ class GateActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            savedInstanceState.remove("android:support:fragments")
+            savedInstanceState.remove("androidx:lifecycle:saved_state_registry")
+        }
+        super.onCreate(null)
+        
+        // Ensure activity shows over lockscreen and turns screen on
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+
         setContentView(R.layout.activity_gate)
         Log.d(TAG, "GateActivity: onCreate")
 
@@ -186,23 +210,14 @@ class GateActivity : AppCompatActivity() {
             // M2-19: Re-trigger pinning if user returns to activity and it's not pinned
             val settings = settingsRepo.read()
             if (settings.screenPinningInstructionsSeen) {
-                val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                val isPinned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    am.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
-                } else {
-                    @Suppress("DEPRECATION")
-                    am.isInLockTaskMode
-                }
-                if (!isPinned) {
-                    ScreenPinningController.requestPinning(this@GateActivity)
-                }
+                ScreenPinningController.requestPinning(this@GateActivity)
             }
         }
     }
 
     private fun enterImmersiveMode() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false)
             window.insetsController?.let { controller ->
                 controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
                 controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -390,7 +405,16 @@ class GateActivity : AppCompatActivity() {
             SessionFinalizer.finalize(applicationContext, session, OffsetDateTime.now().toString(), "system_solve")
         }
         stopPlaybackService()
+        stopGuardianService()
         showReleaseScreen(isSolved = true)
+    }
+
+    private fun stopGuardianService() {
+        try {
+            stopService(Intent(this, GateGuardianForegroundService::class.java))
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to stop GuardianService", e)
+        }
     }
 
     private fun showReleaseScreen(isSolved: Boolean) {
@@ -399,8 +423,12 @@ class GateActivity : AppCompatActivity() {
 
         // Stop Pinning (M2-18: Exit pinned mode automatically on release)
         ScreenPinningController.stopPinning(this)
-
-        // Stop Local Receivers
+        
+        // Aggressively exit immersive mode to show navigation
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+        }
         try {
             unregisterReceiver(timeoutReceiver)
             unregisterReceiver(trackReceiver)
@@ -411,6 +439,7 @@ class GateActivity : AppCompatActivity() {
         // Stop music if timeout
         if (!isSolved) {
             stopPlaybackService()
+            stopGuardianService()
         }
 
         // Change layout visibility to Release state
@@ -455,22 +484,31 @@ class GateActivity : AppCompatActivity() {
         }
         tvUnpinHint.visibility = if (isPinned) View.VISIBLE else View.GONE
 
-        findViewById<Button>(R.id.btn_release_return).setOnClickListener { finish() }
+        findViewById<Button>(R.id.btn_release_return).setOnClickListener {
+            ScreenPinningController.stopPinning(this)
+            
+            // Navigate back to the dashboard/homepage
+            val intent = Intent(this, com.aperture.MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            startActivity(intent)
+            finish()
+        }
         findViewById<View>(R.id.layout_release).visibility = View.VISIBLE
     }
 
     private fun setupPinningCallout() {
-        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val isCurrentlyPinned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
-        } else {
-            @Suppress("DEPRECATION")
-            am.isInLockTaskMode
-        }
-
         // Automatic pinning request if opted-in via settings (M2-19)
         scope.launch {
             val settings = settingsRepo.read()
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            val isCurrentlyPinned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
+            } else {
+                @Suppress("DEPRECATION")
+                am.isInLockTaskMode
+            }
+
             if (!isCurrentlyPinned) {
                 if (settings.screenPinningInstructionsSeen) {
                     // Auto-trigger system popup for friction
@@ -479,6 +517,9 @@ class GateActivity : AppCompatActivity() {
                     // User hasn't acknowledged settings yet, show educational card
                     cardPinning.visibility = View.VISIBLE
                 }
+            } else {
+                // Already pinned, hide card
+                cardPinning.visibility = View.GONE
             }
         }
 
@@ -531,10 +572,21 @@ class GateActivity : AppCompatActivity() {
         }
     }
 
-    @Deprecated("Deprecated in Java")
+    @Suppress("DEPRECATION")
     override fun onBackPressed() {
-        // ponytail: intentional no-op — plan requires the gate to not offer a normal
-        // back/cancel escape. Home/Recents still work; we never claim an unbreakable lock.
+        // ponytail: intentional no-op
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        // M2-19: Re-launch immediately if user tries to leave via Home button
+        val session = activeSession ?: return
+        if (session.status == "gate_active") {
+            val intent = Intent(this, GateActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            }
+            startActivity(intent)
+        }
     }
 
     override fun onDestroy() {

@@ -6,6 +6,10 @@ export interface ApertureModuleType {
   getCapabilities(): Promise<{
     canScheduleExactAlarms: boolean;
     screenPinningInstructionsSeen: boolean;
+    accessibilityServiceEnabled: boolean;
+    usageAccessGranted: boolean;
+    isIgnoringBatteryOptimizations: boolean;
+    canDrawOverlays: boolean;
   }>;
   getDiagnostics(): Promise<{
     version: string;
@@ -53,6 +57,10 @@ export interface ApertureModuleType {
   clearAllData(): Promise<void>;
   resumeGateIfActive(): Promise<boolean>;
   openExactAlarmSettings(): void;
+  openAccessibilitySettings(): void;
+  openUsageAccessSettings(): void;
+  requestIgnoreBatteryOptimizations(): void;
+  openOverlaySettings(): void;
   stopPinning(): Promise<void>;
 }
 

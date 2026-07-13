@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.aperture.data.ActiveSessionRepository
+import com.aperture.gate.GateGuardianForegroundService
 import com.aperture.gate.SessionFinalizer
 import com.aperture.media.PlaybackService
 import kotlinx.coroutines.runBlocking
@@ -31,11 +32,8 @@ class EndGateReceiver : BroadcastReceiver() {
             }
 
             // Finalize as timeout
-            // The contractual end is: start time + wait time + gate time
-            // Let's use OffsetDateTime parsing/arithmetic to write the contractual end
             val start = OffsetDateTime.parse(session.startedAtIso)
-            val contractualEnd = start.plusWeeks(0) // just to copy/manipulate if needed
-                .plusSeconds((session.waitingDurationMs + session.gateDurationMs) / 1000)
+            val contractualEnd = start.plusSeconds((session.waitingDurationMs + session.gateDurationMs) / 1000)
             
             SessionFinalizer.finalize(context, session, contractualEnd.toString(), "system_timeout")
 
@@ -46,13 +44,13 @@ class EndGateReceiver : BroadcastReceiver() {
             context.sendBroadcast(timeoutIntent)
             Log.d(TAG, "Sent com.aperture.GATE_TIMEOUT broadcast")
 
-            // Stop PlaybackService
+            // Stop PlaybackService & Guardian Service
             try {
-                val serviceIntent = Intent(context, PlaybackService::class.java)
-                context.stopService(serviceIntent)
-                Log.d(TAG, "Requested PlaybackService stop")
+                context.stopService(Intent(context, PlaybackService::class.java))
+                context.stopService(Intent(context, GateGuardianForegroundService::class.java))
+                Log.d(TAG, "Requested services stop")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to stop PlaybackService", e)
+                Log.e(TAG, "Failed to stop services", e)
             }
         }
     }
