@@ -432,12 +432,10 @@ class GateActivity : AppCompatActivity() {
         findViewById<View>(R.id.layout_challenge).visibility = View.GONE
         findViewById<View>(R.id.layout_keypad).visibility = View.GONE
         findViewById<View>(R.id.layout_media).visibility = View.GONE
-        cardPinning.visibility = View.GONE
         tvProgress.visibility = View.GONE
 
         val displayLabel = findViewById<TextView>(R.id.tv_label)
         val tvOutcome = findViewById<TextView>(R.id.tv_release_outcome)
-        val tvUnpinHint = findViewById<TextView>(R.id.tv_release_unpin)
 
         if (isSolved) {
             val session = activeSession
@@ -459,9 +457,6 @@ class GateActivity : AppCompatActivity() {
             displayLabel.text = "TIMEOUT"
             displayLabel.setTextColor(0xFF94A3B8.toInt())
         }
-
-        // Check if pinned and show instruction
-        tvUnpinHint.visibility = View.GONE
 
         findViewById<Button>(R.id.btn_release_return).setOnClickListener {
             // Navigate back to the dashboard/homepage
