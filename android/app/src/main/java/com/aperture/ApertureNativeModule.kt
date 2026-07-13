@@ -40,7 +40,7 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
 
     init {
         reactContext.addActivityEventListener(object : BaseActivityEventListener() {
-            override fun onActivityResult(activity: Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
+            override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
                 if (requestCode == PICK_AUDIO_REQUEST) {
                     handleAudioPickResult(resultCode, data)
                 }
@@ -327,7 +327,7 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                 type = "audio/*"
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
             }
-            val activity = currentActivity
+            val activity = reactApplicationContext.currentActivity
             if (activity != null) {
                 activity.startActivityForResult(intent, PICK_AUDIO_REQUEST)
             } else {
