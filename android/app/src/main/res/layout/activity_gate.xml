@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0F1A"
+    android:keepScreenOn="true"
+    android:padding="16dp">
+
+    <!-- Scroll container to avoid keyboard overlap -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Monospace countdown timer at top -->
+            <TextView
+                android:id="@+id/tv_countdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:fontFamily="monospace"
+                android:text="15:00"
+                android:textColor="#F8FAFC"
+                android:textSize="48sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Subtitle label -->
+            <TextView
+                android:id="@+id/tv_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="RELEASE GATE ACTIVE"
+                android:textColor="#94A3B8"
+                android:textSize="14sp"
+                android:letterSpacing="0.1"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_countdown" />
+
+            <!-- Screen Pinning Callout Overlay (Dismissible Card) -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_pinning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#101827"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:layout_constraintTop_toBottomOf="@id/tv_label">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Pin Aperture for stronger friction."
+                        android:textColor="#F8FAFC"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Prevents accidentally leaving the screen until the countdown finishes or you solve the equations."
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal"
+                        android:gravity="end">
+
+                        <Button
+                            android:id="@+id/btn_pin_dismiss"
+                            style="?android:attr/borderlessButtonStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dismiss"
+                            android:textColor="#94A3B8" />
+
+                        <Button
+                            android:id="@+id/btn_pin_request"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:backgroundTint="#004BB8"
+                            android:text="Pin App"
+                            android:textColor="#F8FAFC" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Arithmetic Area -->
+            <LinearLayout
+                android:id="@+id/layout_challenge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintTop_toBottomOf="@id/card_pinning">
+
+                <TextView
+                    android:id="@+id/tv_progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Step 1 / 5"
+                    android:textColor="#004BB8"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_question"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="234 + 567"
+                    android:textColor="#F8FAFC"
+                    android:textSize="36sp"
+                    android:textStyle="bold" />
+
+                <!-- Styled answer display (EditText but disabled for manual typing, input is from custom keypad only) -->
+                <EditText
+                    android:id="@+id/et_answer"
+                    android:layout_width="220dp"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@android:color/transparent"
+                    android:gravity="center"
+                    android:hint="?"
+                    android:textColorHint="#1E293B"
+                    android:textColor="#F8FAFC"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:focusable="false"
+                    android:longClickable="false"
+                    android:textIsSelectable="false"
+                    android:cursorVisible="false"/>
+            </LinearLayout>
+
+            <!-- Numeric Keypad Grid -->
+            <LinearLayout
+                android:id="@+id/layout_keypad"
+                android:layout_width="280dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/layout_challenge">
+
+                <!-- Row 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:orientation="horizontal">
+                    <Button android:id="@+id/btn_key_1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="1" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="2" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="3" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                </LinearLayout>
+
+                <!-- Row 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+                    <Button android:id="@+id/btn_key_4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="4" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="5" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="6" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                </LinearLayout>
+
+                <!-- Row 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+                    <Button android:id="@+id/btn_key_7" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="7" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_8" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="8" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_9" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="9" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                </LinearLayout>
+
+                <!-- Row 4 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+                    <Button android:id="@+id/btn_key_backspace" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="⌫" android:textSize="20sp" android:backgroundTint="#1E293B" android:textColor="#94A3B8" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="0" android:textSize="20sp" android:backgroundTint="#101827" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                    <Button android:id="@+id/btn_key_submit" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:text="→" android:textSize="20sp" android:backgroundTint="#004BB8" android:textColor="#F8FAFC" android:layout_margin="2dp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Release state (shown after solve/timeout; hidden during active gate) -->
+            <LinearLayout
+                android:id="@+id/layout_release"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/tv_label">
+
+                <TextView
+                    android:id="@+id/tv_release_outcome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textColor="#F8FAFC"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_release_unpin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="32dp"
+                    android:paddingHorizontal="16dp"
+                    android:gravity="center"
+                    android:text="Aperture gate has ended.\nUnpin using your Android navigation gesture and device credential."
+                    android:textColor="#94A3B8"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/btn_release_return"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="32dp"
+                    android:backgroundTint="#004BB8"
+                    android:text="Return"
+                    android:textColor="#F8FAFC" />
+            </LinearLayout>
+
+            <!-- Local Music Mini-Player controls -->
+            <LinearLayout
+                android:id="@+id/layout_media"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="24dp"
+                android:background="#101827"
+                android:orientation="vertical"
+                android:padding="16dp"
+                app:layout_constraintTop_toBottomOf="@id/layout_keypad"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <!-- Song Title and Artist -->
+                <TextView
+                    android:id="@+id/tv_track_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="No Track Playing"
+                    android:textColor="#F8FAFC"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <!-- Playback Buttons Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <!-- Shuffle Toggle -->
+                    <Button
+                        android:id="@+id/btn_media_shuffle"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="🔀"
+                        android:textColor="#94A3B8"
+                        android:textSize="14sp"/>
+
+                    <!-- Seek -15s -->
+                    <Button
+                        android:id="@+id/btn_media_rewind"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="⏪"
+                        android:textColor="#F8FAFC"
+                        android:textSize="14sp"/>
+
+                    <!-- Prev -->
+                    <Button
+                        android:id="@+id/btn_media_prev"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="⏮"
+                        android:textColor="#F8FAFC"
+                        android:textSize="14sp"/>
+
+                    <!-- Play / Pause -->
+                    <Button
+                        android:id="@+id/btn_media_play_pause"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:backgroundTint="#004BB8"
+                        android:text="⏸"
+                        android:textColor="#F8FAFC"
+                        android:textSize="18sp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"/>
+
+                    <!-- Next -->
+                    <Button
+                        android:id="@+id/btn_media_next"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="⏭"
+                        android:textColor="#F8FAFC"
+                        android:textSize="14sp"/>
+
+                    <!-- Seek +15s -->
+                    <Button
+                        android:id="@+id/btn_media_forward"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="⏩"
+                        android:textColor="#F8FAFC"
+                        android:textSize="14sp"/>
+
+                    <!-- Random Distinct Track -->
+                    <Button
+                        android:id="@+id/btn_media_random"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:text="🎲"
+                        android:textColor="#94A3B8"
+                        android:textSize="14sp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
