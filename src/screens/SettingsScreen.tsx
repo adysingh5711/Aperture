@@ -17,7 +17,6 @@ export default function SettingsScreen() {
   const [showGatePicker, setShowGatePicker] = useState(false);
 
   const [difficulty, setDifficulty] = useState<string>('standard');
-  const [pinningAck, setPinningAck] = useState(false);
   const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
 
   const load = useCallback(async () => {
@@ -26,7 +25,6 @@ export default function SettingsScreen() {
       setWaitMinutes(settings.defaultWaitingDurationMinutes);
       setGateMinutes(settings.defaultGateDurationMinutes);
       setDifficulty(settings.difficulty);
-      setPinningAck(settings.screenPinningInstructionsSeen);
       setDiagnostics(await ApertureModule.getDiagnostics());
     } catch (e) {
       console.error('Failed to load settings', e);
@@ -95,28 +93,6 @@ export default function SettingsScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
-      </View>
-
-      {/* Screen Pinning */}
-      <Text style={styles.sectionTitle}>Screen Pinning</Text>
-      <View style={styles.card}>
-        <Text style={styles.bodyText}>
-          Enable App Pinning in Android Settings, and the option that requires your PIN, pattern, or
-          password before unpinning. On Samsung: Settings → Security and privacy → Other security
-          settings → Pin app. Aperture cannot verify this setting is on — it can only offer to request
-          pinning when the gate begins.
-        </Text>
-        <View style={[styles.row, styles.rowLast]}>
-          <Text style={styles.rowLabel}>I've enabled App Pinning</Text>
-          <Switch
-            value={pinningAck}
-            onValueChange={(val) => {
-              setPinningAck(val);
-              ApertureModule.updateSettings({ screenPinningInstructionsSeen: val });
-            }}
-            trackColor={{ true: colors.action, false: colors.border }}
-          />
         </View>
       </View>
 

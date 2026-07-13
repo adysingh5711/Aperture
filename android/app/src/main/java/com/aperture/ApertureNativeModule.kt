@@ -60,8 +60,6 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
             val map = Arguments.createMap().apply {
                 putBoolean("canScheduleExactAlarms",
                     if (Build.VERSION.SDK_INT >= 31) alarmManager.canScheduleExactAlarms() else true)
-                putBoolean("screenPinningInstructionsSeen",
-                    runBlocking { settingsRepo.read().screenPinningInstructionsSeen })
                 putBoolean("accessibilityServiceEnabled", isAccessibilityServiceEnabled())
                 putBoolean("usageAccessGranted", isUsageAccessGranted())
                 putBoolean("isIgnoringBatteryOptimizations", isIgnoringBatteryOptimizations())
@@ -556,9 +554,6 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                 val settings = settingsRepo.read()
                 var updated = settings
 
-                if (input.hasKey("screenPinningInstructionsSeen")) {
-                    updated = updated.copy(screenPinningInstructionsSeen = input.getBoolean("screenPinningInstructionsSeen"))
-                }
                 if (input.hasKey("difficulty")) {
                     updated = updated.copy(difficulty = input.getString("difficulty") ?: "standard")
                 }
@@ -586,7 +581,6 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
             try {
                 val settings = settingsRepo.read()
                 val map = Arguments.createMap().apply {
-                    putBoolean("screenPinningInstructionsSeen", settings.screenPinningInstructionsSeen)
                     putString("difficulty", settings.difficulty)
                     putBoolean("shuffleKeypad", settings.shuffleKeypad)
                     putInt("defaultWaitingDurationMinutes", settings.defaultWaitingDurationMinutes)
@@ -670,13 +664,8 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
 
     @ReactMethod
     fun stopPinning(promise: Promise) {
-        val activity = reactApplicationContext.currentActivity
-        if (activity != null) {
-            com.aperture.gate.ScreenPinningController.stopPinning(activity)
-            promise.resolve(null)
-        } else {
-            promise.reject("NO_ACTIVITY", "No activity available to stop pinning")
-        }
+        // Method kept for JS compatibility but logic removed
+        promise.resolve(null)
     }
 
     private fun serializeActiveSession(session: ActiveSession): String {

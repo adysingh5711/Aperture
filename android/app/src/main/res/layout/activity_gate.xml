@@ -48,66 +48,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_countdown" />
 
-            <!-- Screen Pinning Callout Overlay (Dismissible Card) -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_pinning"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="#101827"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:layout_constraintTop_toBottomOf="@id/tv_label">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Pin Aperture for stronger friction."
-                        android:textColor="#F8FAFC"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Prevents accidentally leaving the screen until the countdown finishes or you solve the equations."
-                        android:textColor="#94A3B8"
-                        android:textSize="12sp" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:orientation="horizontal"
-                        android:gravity="end">
-
-                        <Button
-                            android:id="@+id/btn_pin_dismiss"
-                            style="?android:attr/borderlessButtonStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Dismiss"
-                            android:textColor="#94A3B8" />
-
-                        <Button
-                            android:id="@+id/btn_pin_request"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:backgroundTint="#004BB8"
-                            android:text="Pin App"
-                            android:textColor="#F8FAFC" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
             <!-- Arithmetic Area -->
             <LinearLayout
@@ -117,7 +57,7 @@
                 android:layout_marginTop="24dp"
                 android:gravity="center"
                 android:orientation="vertical"
-                app:layout_constraintTop_toBottomOf="@id/card_pinning">
+                app:layout_constraintTop_toBottomOf="@id/tv_label">
 
                 <TextView
                     android:id="@+id/tv_progress"
@@ -232,17 +172,6 @@
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tv_release_unpin"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp"
-                    android:paddingHorizontal="16dp"
-                    android:gravity="center"
-                    android:text="Aperture gate has ended.\nUnpin using your Android navigation gesture and device credential."
-                    android:textColor="#94A3B8"
-                    android:textSize="14sp"
-                    android:visibility="gone" />
 
                 <Button
                     android:id="@+id/btn_release_return"

@@ -32,7 +32,6 @@ class SettingsRepository(private val context: Context) {
             val root = JSONObject(jsonStr)
             return Settings(
                 schemaVersion = root.optInt("schemaVersion", 1),
-                screenPinningInstructionsSeen = root.optBoolean("screenPinningInstructionsSeen", false),
                 difficulty = root.optString("difficulty", "standard"),
                 shuffleKeypad = root.optBoolean("shuffleKeypad", false),
                 defaultWaitingDurationMinutes = root.optInt("defaultWaitingDurationMinutes", 10),
@@ -53,7 +52,6 @@ class SettingsRepository(private val context: Context) {
         try {
             val root = JSONObject()
             root.put("schemaVersion", settings.schemaVersion)
-            root.put("screenPinningInstructionsSeen", settings.screenPinningInstructionsSeen)
             root.put("difficulty", settings.difficulty)
             root.put("shuffleKeypad", settings.shuffleKeypad)
             root.put("defaultWaitingDurationMinutes", settings.defaultWaitingDurationMinutes)
@@ -70,11 +68,6 @@ class SettingsRepository(private val context: Context) {
                 atomicFile.failWrite(fos)
             }
         }
-    }
-
-    suspend fun setPinningInstructionsSeen(seen: Boolean) = mutex.withLock {
-        val current = readInternal()
-        writeInternal(current.copy(screenPinningInstructionsSeen = seen))
     }
 
     suspend fun setDifficulty(diff: String) = mutex.withLock {

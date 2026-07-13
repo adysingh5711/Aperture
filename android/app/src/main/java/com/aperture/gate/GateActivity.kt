@@ -45,7 +45,6 @@ class GateActivity : AppCompatActivity() {
     private lateinit var tvProgress: TextView
     private lateinit var tvQuestion: TextView
     private lateinit var etAnswer: EditText
-    private lateinit var cardPinning: CardView
     private lateinit var tvTrackTitle: TextView
     private lateinit var btnPlayPause: Button
 
@@ -116,7 +115,6 @@ class GateActivity : AppCompatActivity() {
         tvProgress = findViewById(R.id.tv_progress)
         tvQuestion = findViewById(R.id.tv_question)
         etAnswer = findViewById(R.id.et_answer)
-        cardPinning = findViewById(R.id.card_pinning)
         tvTrackTitle = findViewById(R.id.tv_track_title)
         btnPlayPause = findViewById(R.id.btn_media_play_pause)
 
@@ -139,7 +137,6 @@ class GateActivity : AppCompatActivity() {
         val session = activeSession
         if (session == null || session.status != "gate_active") {
             Log.w(TAG, "No active gate session found, finishing")
-            ScreenPinningController.stopPinning(this)
             finish()
             return
         }
@@ -154,7 +151,6 @@ class GateActivity : AppCompatActivity() {
                 val contractualEnd = start.plusSeconds((session.waitingDurationMs + session.gateDurationMs) / 1000)
                 SessionFinalizer.finalize(applicationContext, session, contractualEnd.toString(), "system_timeout")
             }
-            ScreenPinningController.stopPinning(this)
             finish()
             return
         }
@@ -202,15 +198,8 @@ class GateActivity : AppCompatActivity() {
             val current = activeRepo.read()
             if (current == null) {
                 Log.d(TAG, "Session cleared, finishing GateActivity")
-                ScreenPinningController.stopPinning(this@GateActivity)
                 finish()
                 return@launch
-            }
-
-            // M2-19: Re-trigger pinning if user returns to activity and it's not pinned
-            val settings = settingsRepo.read()
-            if (settings.screenPinningInstructionsSeen) {
-                ScreenPinningController.requestPinning(this@GateActivity)
             }
         }
     }
@@ -421,9 +410,6 @@ class GateActivity : AppCompatActivity() {
         countdownTimer?.cancel()
         countdownTimer = null
 
-        // Stop Pinning (M2-18: Exit pinned mode automatically on release)
-        ScreenPinningController.stopPinning(this)
-        
         // Aggressively exit immersive mode to show navigation
         WindowCompat.setDecorFitsSystemWindows(window, true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -475,18 +461,9 @@ class GateActivity : AppCompatActivity() {
         }
 
         // Check if pinned and show instruction
-        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val isPinned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
-        } else {
-            @Suppress("DEPRECATION")
-            am.isInLockTaskMode
-        }
-        tvUnpinHint.visibility = if (isPinned) View.VISIBLE else View.GONE
+        tvUnpinHint.visibility = View.GONE
 
         findViewById<Button>(R.id.btn_release_return).setOnClickListener {
-            ScreenPinningController.stopPinning(this)
-            
             // Navigate back to the dashboard/homepage
             val intent = Intent(this, com.aperture.MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -498,39 +475,7 @@ class GateActivity : AppCompatActivity() {
     }
 
     private fun setupPinningCallout() {
-        // Automatic pinning request if opted-in via settings (M2-19)
-        scope.launch {
-            val settings = settingsRepo.read()
-            val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-            val isCurrentlyPinned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                am.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
-            } else {
-                @Suppress("DEPRECATION")
-                am.isInLockTaskMode
-            }
-
-            if (!isCurrentlyPinned) {
-                if (settings.screenPinningInstructionsSeen) {
-                    // Auto-trigger system popup for friction
-                    ScreenPinningController.requestPinning(this@GateActivity)
-                } else {
-                    // User hasn't acknowledged settings yet, show educational card
-                    cardPinning.visibility = View.VISIBLE
-                }
-            } else {
-                // Already pinned, hide card
-                cardPinning.visibility = View.GONE
-            }
-        }
-
-        findViewById<Button>(R.id.btn_pin_dismiss).setOnClickListener {
-            cardPinning.visibility = View.GONE
-        }
-
-        findViewById<Button>(R.id.btn_pin_request).setOnClickListener {
-            cardPinning.visibility = View.GONE
-            ScreenPinningController.requestPinning(this)
-        }
+        // Pinning UI completely removed
     }
 
     private fun setupMediaControls() {

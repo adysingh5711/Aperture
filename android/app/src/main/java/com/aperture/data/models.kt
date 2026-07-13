@@ -56,7 +56,6 @@ data class MusicLibrary(
 
 data class Settings(
     val schemaVersion: Int = 1,
-    val screenPinningInstructionsSeen: Boolean = false,
     val difficulty: String = "standard", // "light" | "standard" | "hard"
     val shuffleKeypad: Boolean = false,
     val defaultWaitingDurationMinutes: Int = 10,

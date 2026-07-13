@@ -5,7 +5,6 @@ const { ApertureNativeModule } = NativeModules;
 export interface ApertureModuleType {
   getCapabilities(): Promise<{
     canScheduleExactAlarms: boolean;
-    screenPinningInstructionsSeen: boolean;
     accessibilityServiceEnabled: boolean;
     usageAccessGranted: boolean;
     isIgnoringBatteryOptimizations: boolean;
@@ -40,14 +39,12 @@ export interface ApertureModuleType {
   }): Promise<void>;
   removeMusicItem(id: string): Promise<void>;
   updateSettings(input: {
-    screenPinningInstructionsSeen?: boolean;
     difficulty?: string;
     shuffleKeypad?: boolean;
     defaultWaitingDurationMinutes?: number;
     defaultGateDurationMinutes?: number;
   }): Promise<void>;
   getSettings(): Promise<{
-    screenPinningInstructionsSeen: boolean;
     difficulty: string;
     shuffleKeypad: boolean;
     defaultWaitingDurationMinutes: number;
