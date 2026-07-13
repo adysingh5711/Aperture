@@ -115,6 +115,7 @@ class GateActivity : AppCompatActivity() {
         val session = activeSession
         if (session == null || session.status != "gate_active") {
             Log.w(TAG, "No active gate session found, finishing")
+            ScreenPinningController.stopPinning(this)
             finish()
             return
         }
@@ -129,6 +130,7 @@ class GateActivity : AppCompatActivity() {
                 val contractualEnd = start.plusSeconds((session.waitingDurationMs + session.gateDurationMs) / 1000)
                 SessionFinalizer.finalize(applicationContext, session, contractualEnd.toString(), "system_timeout")
             }
+            ScreenPinningController.stopPinning(this)
             finish()
             return
         }
@@ -176,7 +178,24 @@ class GateActivity : AppCompatActivity() {
             val current = activeRepo.read()
             if (current == null) {
                 Log.d(TAG, "Session cleared, finishing GateActivity")
+                ScreenPinningController.stopPinning(this@GateActivity)
                 finish()
+                return@launch
+            }
+
+            // M2-19: Re-trigger pinning if user returns to activity and it's not pinned
+            val settings = settingsRepo.read()
+            if (settings.screenPinningInstructionsSeen) {
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                val isPinned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
+                } else {
+                    @Suppress("DEPRECATION")
+                    am.isInLockTaskMode
+                }
+                if (!isPinned) {
+                    ScreenPinningController.requestPinning(this@GateActivity)
+                }
             }
         }
     }
@@ -378,6 +397,9 @@ class GateActivity : AppCompatActivity() {
         countdownTimer?.cancel()
         countdownTimer = null
 
+        // Stop Pinning (M2-18: Exit pinned mode automatically on release)
+        ScreenPinningController.stopPinning(this)
+
         // Stop Local Receivers
         try {
             unregisterReceiver(timeoutReceiver)
@@ -446,11 +468,17 @@ class GateActivity : AppCompatActivity() {
             am.isInLockTaskMode
         }
 
-        // If not pinned, and instructions acknowledgement was enabled, show callout
+        // Automatic pinning request if opted-in via settings (M2-19)
         scope.launch {
             val settings = settingsRepo.read()
-            if (!isCurrentlyPinned && settings.screenPinningInstructionsSeen) {
-                cardPinning.visibility = View.VISIBLE
+            if (!isCurrentlyPinned) {
+                if (settings.screenPinningInstructionsSeen) {
+                    // Auto-trigger system popup for friction
+                    ScreenPinningController.requestPinning(this@GateActivity)
+                } else {
+                    // User hasn't acknowledged settings yet, show educational card
+                    cardPinning.visibility = View.VISIBLE
+                }
             }
         }
 

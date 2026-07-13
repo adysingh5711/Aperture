@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, AppState } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, spacing, radii } from '../theme';
 import ApertureModule from '../native/ApertureModule';
@@ -92,6 +92,16 @@ export default function TodayScreen() {
       ApertureModule.resumeGateIfActive();
     }, [checkStatus])
   );
+
+  // Refresh when app comes to foreground (M2-20: refresh state after returning from GateActivity)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        checkStatus();
+      }
+    });
+    return () => subscription.remove();
+  }, [checkStatus]);
 
   // Setup JS-side countdown timer for waiting phase
   useEffect(() => {

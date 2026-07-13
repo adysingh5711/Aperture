@@ -587,6 +587,17 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
         }
     }
 
+    @ReactMethod
+    fun stopPinning(promise: Promise) {
+        val activity = getCurrentActivity()
+        if (activity != null) {
+            com.aperture.gate.ScreenPinningController.stopPinning(activity)
+            promise.resolve(null)
+        } else {
+            promise.reject("NO_ACTIVITY", "No activity available to stop pinning")
+        }
+    }
+
     private fun serializeActiveSession(session: ActiveSession): String {
         val root = JSONObject()
         root.put("schemaVersion", session.schemaVersion)

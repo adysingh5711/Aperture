@@ -53,6 +53,7 @@ export interface ApertureModuleType {
   clearAllData(): Promise<void>;
   resumeGateIfActive(): Promise<boolean>;
   openExactAlarmSettings(): void;
+  stopPinning(): Promise<void>;
 }
 
 export default ApertureNativeModule as ApertureModuleType;
