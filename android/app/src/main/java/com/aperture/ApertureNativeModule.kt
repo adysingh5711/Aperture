@@ -625,6 +625,41 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
     }
 
     @ReactMethod
+    fun updateOperationIndex(index: Int, promise: Promise) {
+        runBlocking {
+            try {
+                val session = activeRepo.read()
+                if (session != null) {
+                    val updated = session.copy(operationIndex = index)
+                    activeRepo.write(updated)
+                    promise.resolve(null)
+                } else {
+                    promise.reject("NO_SESSION", "No active session to update")
+                }
+            } catch (e: Exception) {
+                promise.reject("UPDATE_FAILED", e.message)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun finalizeSession(endSource: String, promise: Promise) {
+        runBlocking {
+            try {
+                val session = activeRepo.read()
+                if (session != null) {
+                    SessionFinalizer.finalize(reactApplicationContext, session, OffsetDateTime.now().toString(), endSource)
+                    promise.resolve(null)
+                } else {
+                    promise.reject("NO_SESSION", "No active session to finalize")
+                }
+            } catch (e: Exception) {
+                promise.reject("FINALIZE_FAILED", e.message)
+            }
+        }
+    }
+
+    @ReactMethod
     fun resumeGateIfActive(promise: Promise) {
         runBlocking {
             try {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, AppState } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radii } from '../theme';
 import ApertureModule from '../native/ApertureModule';
 import { ActiveSession, CommitmentLog, Session } from '../types';
@@ -11,6 +12,7 @@ import DailyTimeline from '../components/DailyTimeline';
 type ScreenState = 'idle' | 'confirming' | 'waiting' | 'gate_active';
 
 export default function TodayScreen() {
+  const insets = useSafeAreaInsets();
   const [screenState, setScreenState] = useState<ScreenState>('idle');
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   
@@ -54,6 +56,7 @@ export default function TodayScreen() {
       setGateMinutes(settings.defaultGateDurationMinutes);
 
       const sessionJson = await ApertureModule.getActiveSession();
+      console.log('Active session response:', sessionJson);
       if (sessionJson) {
         const session = JSON.parse(sessionJson) as ActiveSession;
         setActiveSession(session);
@@ -122,9 +125,8 @@ export default function TodayScreen() {
         setCountdownRemaining(remaining);
         
         if (remaining === 0) {
-          // Check if native service launched GateActivity
           clearInterval(timer);
-          checkStatus();
+          // App.tsx handles the root state transition to GateScreen
         }
       };
 
@@ -294,7 +296,10 @@ export default function TodayScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+    <ScrollView
+      style={[styles.container, { paddingTop: insets.top }]}
+      contentContainerStyle={{ paddingBottom: spacing.xl + insets.bottom }}
+    >
       {/* Exact Alarm Permission Banner */}
       {!canScheduleAlarms && (
         <View style={styles.bannerAlert}>
