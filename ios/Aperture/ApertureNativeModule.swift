@@ -6,7 +6,7 @@ import UIKit
 import UserNotifications
 
 @objc(ApertureNativeModule)
-class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate {
+class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate, UNUserNotificationCenterDelegate {
 
   static func moduleName() -> String! {
     return "ApertureNativeModule"
@@ -67,7 +67,9 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate 
     let gateMs = Int64(gateMinutes * 60_000)
 
     let now = Date()
-    let nowElapsed = Int64(ProcessInfo.processInfo.systemUptime * 1000)
+    // Epoch millis, not systemUptime: GateScreen.tsx (the enforcement UI on iOS) compares
+    // these fields against Date.now(), so they must share the same clock base.
+    let nowElapsed = Int64(now.timeIntervalSince1970 * 1000)
     let sessionId = UUID().uuidString
 
     let session: [String: Any] = [
@@ -112,8 +114,8 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate 
   }
 
   @objc func getActiveSession(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-    if let session = getActiveSessionInternal() {
-      let nowElapsed = Int64(ProcessInfo.processInfo.systemUptime * 1000)
+    if var session = getActiveSessionInternal() {
+      let nowElapsed = Int64(Date().timeIntervalSince1970 * 1000)
 
       // Reboot reconciliation
       if nowElapsed < (session["startElapsedMs"] as? Int64 ?? 0) {
@@ -122,6 +124,18 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate 
         clearActiveSession()
         resolve(nil)
         return
+      }
+
+      // Waiting -> gate transition. iOS has no background alarm/service to flip this
+      // proactively (unlike Android's StartGateReceiver), so it's reconciled lazily here,
+      // on every read.
+      if (session["status"] as? String == "waiting_for_gate") && (nowElapsed >= (session["gateAtElapsedMs"] as? Int64 ?? 0)) {
+        session["status"] = "gate_active"
+        saveActiveSession(session)
+        startPlayback()
+        DispatchQueue.main.async {
+          UIApplication.shared.isIdleTimerDisabled = true
+        }
       }
 
       // Timeout reconciliation
@@ -148,6 +162,10 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate 
     } else {
       reject("READ_FAILED", "Failed to read journal", nil)
     }
+  }
+
+  @objc func exportJournal(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    getJournal(resolve, rejecter: reject)
   }
 
   @objc func addManualSession(_ input: NSDictionary, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
@@ -430,7 +448,14 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate 
   // MARK: - Notifications & Background Detection
 
   private func setupNotifications() {
+    UNUserNotificationCenter.current().delegate = self
     NotificationCenter.default.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+  }
+
+  // Without this, iOS silently drops local notifications fired while the app is foregrounded
+  // (e.g. the "gate closing in 1 minute" warning while the user is sitting on the gate screen).
+  func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    completionHandler([.banner, .sound, .list])
   }
 
   @objc private func appDidEnterBackground() {
@@ -444,7 +469,8 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate 
     let content = UNMutableNotificationContent()
     content.title = "Aperture Lock Active"
     content.body = "Return to the app immediately to complete your commitment."
-    content.sound = .defaultCritical
+    content.sound = .default
+    content.interruptionLevel = .timeSensitive
 
     let request = UNNotificationRequest(identifier: "RETURN_TO_APP", content: content, trigger: nil)
     UNUserNotificationCenter.current().add(request)
@@ -452,7 +478,7 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate 
 
   private func scheduleGateNotifications(waitMs: Int64, gateMs: Int64) {
     let center = UNUserNotificationCenter.current()
-    center.requestAuthorization(options: [.alert, .sound, .criticalAlert]) { granted, _ in }
+    center.requestAuthorization(options: [.alert, .sound]) { granted, _ in }
 
     // 1. Notification for when gate starts
     let startContent = UNMutableNotificationContent()

@@ -53,9 +53,6 @@ class JSChallengeEngine {
 
   private generateStep(random: () => number, config: any): Step {
     const ops = ['+', '-', '×', '÷'];
-    const op = ops[Math.floor(random() * ops.size)]; // Wait, ops.size is Java. JS is length.
-
-    // Fixed: Math.floor(random() * ops.length)
     const opActual = ops[Math.floor(random() * ops.length)];
 
     const minVal = Math.pow(10, config.minDigits - 1);
@@ -122,7 +119,7 @@ export default function GateScreen({ session, onRelease }: { session: ActiveSess
       const remaining = Math.max(0, Math.floor((session.endAtElapsedMs - Date.now()) / 1000));
       if (remaining === 0) {
         clearInterval(timer);
-        onRelease(); // Timeout
+        ApertureModule.finalizeSession('system_timeout').finally(onRelease);
       } else {
         const m = Math.floor(remaining / 60);
         const s = remaining % 60;
@@ -158,6 +155,7 @@ export default function GateScreen({ session, onRelease }: { session: ActiveSess
           <TouchableOpacity
             key={k}
             style={styles.key}
+            activeOpacity={0.6}
             onPress={() => {
               if (k === '⌫') setAnswer(prev => prev.slice(0, -1));
               else if (k === '→') handleSubmit();
@@ -257,7 +255,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     includeFontPadding: false,
-    textAlignVertical: 'center',
-    lineHeight: 40,
   },
 });
