@@ -566,6 +566,9 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                 if (input.hasKey("defaultGateDurationMinutes")) {
                     updated = updated.copy(defaultGateDurationMinutes = input.getInt("defaultGateDurationMinutes"))
                 }
+                if (input.hasKey("themeMode")) {
+                    updated = updated.copy(themeMode = input.getString("themeMode") ?: "system")
+                }
 
                 settingsRepo.write(updated)
                 promise.resolve(null)
@@ -585,6 +588,7 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                     putBoolean("shuffleKeypad", settings.shuffleKeypad)
                     putInt("defaultWaitingDurationMinutes", settings.defaultWaitingDurationMinutes)
                     putInt("defaultGateDurationMinutes", settings.defaultGateDurationMinutes)
+                    putString("themeMode", settings.themeMode)
                 }
                 promise.resolve(map)
             } catch (e: Exception) {

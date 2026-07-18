@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NeoPOP keypad key: flat, sharp, hard border; darkens while pressed -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/np_key_pressed" />
+            <stroke android:width="1dp" android:color="@color/np_border_pressed" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/np_surface" />
+            <stroke android:width="1dp" android:color="@color/np_border" />
+        </shape>
+    </item>
+</selector>

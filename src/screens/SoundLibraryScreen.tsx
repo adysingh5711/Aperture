@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { alert } from '../components/alert';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, spacing, radii } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { NeoPopButton, NeoPopCard, SectionLabel } from '../components/neopop';
 import ApertureModule from '../native/ApertureModule';
 import { MusicLibrary, MusicItem } from '../types';
 
@@ -13,7 +15,14 @@ function formatTrackDuration(ms: number): string {
 }
 
 export default function SoundLibraryScreen() {
+  const { colors, isDark } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [library, setLibrary] = useState<MusicLibrary | null>(null);
+
+  const switchProps = {
+    trackColor: { false: colors.border, true: colors.accent },
+    thumbColor: isDark ? colors.textPrimary : '#FFFFFF',
+  };
 
   const load = useCallback(async () => {
     try {
@@ -53,12 +62,12 @@ export default function SoundLibraryScreen() {
       const json = await ApertureModule.pickAndAddMusic();
       if (json) load();
     } catch (e: any) {
-      Alert.alert('Could not add file', e.message || 'Try a different file');
+      alert('Could not add file', e.message || 'Try a different file');
     }
   };
 
   const handleRemove = (item: MusicItem) => {
-    Alert.alert('Remove track', `Remove "${item.displayName}" from the gate sound library?`, [
+    alert('Remove track', `Remove "${item.displayName}" from the gate sound library?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
@@ -73,123 +82,125 @@ export default function SoundLibraryScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>Shuffle queue</Text>
-        <Switch
-          value={library?.shuffleEnabled ?? true}
-          onValueChange={toggleShuffle}
-          trackColor={{ true: colors.action, false: colors.border }}
-        />
-      </View>
+      <SectionLabel style={styles.sectionTitle}>Playback</SectionLabel>
+      <NeoPopCard>
+        <View style={styles.shuffleRow}>
+          <Text style={styles.rowLabel}>Shuffle queue</Text>
+          <Switch
+            value={library?.shuffleEnabled ?? true}
+            onValueChange={toggleShuffle}
+            {...switchProps}
+          />
+        </View>
+      </NeoPopCard>
 
-      <TouchableOpacity style={styles.btnAdd} onPress={handleAdd}>
-        <Text style={styles.btnAddText}>+ Add music</Text>
-      </TouchableOpacity>
+      <NeoPopButton
+        title="Add music"
+        variant="primary"
+        style={{ marginVertical: spacing.md }}
+        onPress={handleAdd}
+      />
 
       {music.length === 0 ? (
         <Text style={styles.emptyText}>No music added. Gate will use a default tone.</Text>
       ) : (
-        <View style={styles.list}>
-          {music.map(item => (
-            <View key={item.id} style={styles.trackRow}>
-              <View style={styles.trackInfo}>
-                <Text style={styles.trackName} numberOfLines={1}>{item.displayName}</Text>
-                <Text style={styles.trackMeta}>{formatTrackDuration(item.durationMs)}</Text>
+        <>
+          <SectionLabel style={styles.sectionTitle}>Tracks</SectionLabel>
+          <View style={styles.list}>
+            {music.map((item, i) => (
+              <View key={item.id} style={[styles.trackRow, i === music.length - 1 && styles.trackRowLast]}>
+                <View style={styles.trackInfo}>
+                  <Text style={styles.trackName} numberOfLines={1}>{item.displayName}</Text>
+                  <Text style={styles.trackMeta}>{formatTrackDuration(item.durationMs)}</Text>
+                </View>
+                <Switch
+                  value={item.enabled}
+                  onValueChange={() => toggleEnabled(item.id)}
+                  {...switchProps}
+                />
+                <TouchableOpacity
+                  accessibilityLabel={`Remove ${item.displayName}`}
+                  style={styles.deleteBtn}
+                  onPress={() => handleRemove(item)}
+                >
+                  <Text style={styles.deleteText}>REMOVE</Text>
+                </TouchableOpacity>
               </View>
-              <Switch
-                value={item.enabled}
-                onValueChange={() => toggleEnabled(item.id)}
-                trackColor={{ true: colors.action, false: colors.border }}
-              />
-              <TouchableOpacity
-                accessibilityLabel={`Remove ${item.displayName}`}
-                style={styles.deleteBtn}
-                onPress={() => handleRemove(item)}
-              >
-                <Text style={styles.deleteText}>Remove</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        </>
       )}
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  rowLabel: {
-    color: colors.textPrimary,
-    fontSize: 16,
-  },
-  btnAdd: {
-    borderWidth: 1,
-    borderColor: colors.action,
-    borderRadius: radii.button,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginVertical: spacing.md,
-  },
-  btnAddText: {
-    color: colors.action,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: spacing.xl,
-  },
-  list: {
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  trackRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: '#1E293B',
-  },
-  trackInfo: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  trackName: {
-    color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  trackMeta: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  deleteBtn: {
-    marginLeft: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  deleteText: {
-    color: '#EF4444',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+    },
+    sectionTitle: {
+      marginBottom: spacing.sm,
+    },
+    shuffleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    rowLabel: {
+      color: c.textPrimary,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    emptyText: {
+      color: c.textSecondary,
+      fontSize: 12,
+      textAlign: 'center',
+      marginTop: spacing.xl,
+    },
+    list: {
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    trackRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    trackRowLast: {
+      borderBottomWidth: 0,
+    },
+    trackInfo: {
+      flex: 1,
+      marginRight: spacing.sm,
+    },
+    trackName: {
+      color: c.textPrimary,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    trackMeta: {
+      color: c.textSecondary,
+      fontSize: 12,
+    },
+    deleteBtn: {
+      marginLeft: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderWidth: 1,
+      borderColor: c.error,
+    },
+    deleteText: {
+      color: c.error,
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1,
+    },
+  });

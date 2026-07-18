@@ -47,12 +47,14 @@ export interface ApertureModuleType {
     shuffleKeypad?: boolean;
     defaultWaitingDurationMinutes?: number;
     defaultGateDurationMinutes?: number;
+    themeMode?: 'light' | 'dark' | 'system';
   }): Promise<void>;
   getSettings(): Promise<{
     difficulty: string;
     shuffleKeypad: boolean;
     defaultWaitingDurationMinutes: number;
     defaultGateDurationMinutes: number;
+    themeMode?: 'light' | 'dark' | 'system'; // absent on settings files written before this key existed
   }>;
   exportJournal(): Promise<string>;
   clearAllData(): Promise<void>;
@@ -79,6 +81,7 @@ let _mockSettings: any = {
   shuffleKeypad: false,
   defaultWaitingDurationMinutes: 10,
   defaultGateDurationMinutes: 15,
+  themeMode: 'system',
 };
 
 const ApertureModuleFallback: ApertureModuleType = {

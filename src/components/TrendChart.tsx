@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, DimensionValue } from 'react-native';
-import { colors, spacing } from '../theme';
+import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { NeoPopCard, SectionLabel } from './neopop';
 import { Session } from '../types';
 import { getISODateKey, gateMsForSession } from '../utils/formatters';
 
@@ -9,6 +10,7 @@ interface TrendChartProps {
 }
 
 export default function TrendChart({ sessionsByDay }: TrendChartProps) {
+  const styles = useThemedStyles(makeStyles);
   const [daysCount, setDaysCount] = useState<7 | 30>(7);
 
   // Generate date keys for the last 7 or 30 days
@@ -16,7 +18,7 @@ export default function TrendChart({ sessionsByDay }: TrendChartProps) {
     const d = new Date();
     d.setDate(d.getDate() - (daysCount - 1 - i));
     const key = getISODateKey(d);
-    
+
     // Sum gate durations (exclude manual kind)
     const daySessions = sessionsByDay[key] || [];
     const totalGateMs = daySessions.reduce((sum, s) => sum + gateMsForSession(s), 0);
@@ -34,9 +36,9 @@ export default function TrendChart({ sessionsByDay }: TrendChartProps) {
 
   // ponytail: View-based bar chart. Ceiling: no animation, no touch tooltips. Upgrade: react-native-svg + d3-scale
   return (
-    <View style={styles.container}>
+    <NeoPopCard style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Gate Minutes Trend</Text>
+        <SectionLabel>Gate Minutes Trend</SectionLabel>
         <View style={styles.toggleRow}>
           <TouchableOpacity
             style={[styles.toggleBtn, daysCount === 7 && styles.toggleBtnActive]}
@@ -70,10 +72,8 @@ export default function TrendChart({ sessionsByDay }: TrendChartProps) {
                 <View
                   style={[
                     styles.barFill,
-                    {
-                      height: pctHeight,
-                      backgroundColor: isToday ? colors.action : colors.heatHigh,
-                    },
+                    { height: pctHeight },
+                    isToday && styles.barFillToday,
                   ]}
                 />
               </View>
@@ -85,80 +85,71 @@ export default function TrendChart({ sessionsByDay }: TrendChartProps) {
           );
         })}
       </View>
-    </View>
+    </NeoPopCard>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  title: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.border,
-    borderRadius: 8,
-    padding: 2,
-  },
-  toggleBtn: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  toggleBtnActive: {
-    backgroundColor: '#1E293B',
-  },
-  toggleText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  toggleTextActive: {
-    color: colors.textPrimary,
-  },
-  chartArea: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingTop: spacing.sm,
-  },
-  barColumn: {
-    flex: 1,
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  barTrack: {
-    flex: 1,
-    width: 6,
-    backgroundColor: colors.border,
-    borderRadius: 3,
-    justifyContent: 'flex-end',
-    marginBottom: 4,
-  },
-  barFill: {
-    width: '100%',
-    borderRadius: 3,
-  },
-  barLabel: {
-    color: colors.textSecondary,
-    fontSize: 9,
-    fontFamily: 'monospace',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginTop: spacing.md,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.md,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    toggleBtn: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 4,
+    },
+    toggleBtnActive: {
+      backgroundColor: c.textPrimary,
+    },
+    toggleText: {
+      color: c.textSecondary,
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1,
+    },
+    toggleTextActive: {
+      color: c.background,
+    },
+    chartArea: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      paddingTop: spacing.sm,
+    },
+    barColumn: {
+      flex: 1,
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
+    barTrack: {
+      flex: 1,
+      width: 6,
+      backgroundColor: c.heatNone,
+      justifyContent: 'flex-end',
+      marginBottom: 4,
+    },
+    barFill: {
+      width: '100%',
+      backgroundColor: c.accent,
+    },
+    barFillToday: {
+      backgroundColor: c.textPrimary,
+    },
+    barLabel: {
+      color: c.textSecondary,
+      fontSize: 10,
+      fontFamily: 'monospace',
+    },
+  });

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, spacing } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { ArrowLeftIcon, ArrowRightIcon } from './icons';
 import { CommitmentLog } from '../types';
 import { formatDateMonthYear, getISODateKey } from '../utils/formatters';
 
@@ -10,6 +11,8 @@ interface CalendarHeatmapProps {
 }
 
 export default function CalendarHeatmap({ journal, onDayPress }: CalendarHeatmapProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
   const year = currentMonthDate.getFullYear();
@@ -63,7 +66,7 @@ export default function CalendarHeatmap({ journal, onDayPress }: CalendarHeatmap
     const key = getISODateKey(date);
     const dayLog = journal?.days?.[key];
     const sessions = dayLog?.sessions || [];
-    
+
     // Sum gate durations (exclude manual kind)
     let totalGateMs = 0;
     let enforcedCount = 0;
@@ -76,7 +79,7 @@ export default function CalendarHeatmap({ journal, onDayPress }: CalendarHeatmap
         const gateStart = start + waitMs;
         const gateDuration = s.gateDurationMs || 0;
         const gateEnd = gateStart + gateDuration;
-        
+
         // Actual gate end clamped between gateStart and gateEnd
         const actualEnd = Math.min(gateEnd, Math.max(gateStart, end));
         totalGateMs += Math.max(0, actualEnd - gateStart);
@@ -106,12 +109,12 @@ export default function CalendarHeatmap({ journal, onDayPress }: CalendarHeatmap
     <View style={styles.container}>
       {/* Month Selector Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={prevMonth} style={styles.navButton} accessibilityLabel="Previous month">
-          <Text style={styles.navText}>◀</Text>
+        <TouchableOpacity onPress={prevMonth} style={styles.navButton} hitSlop={12} accessibilityLabel="Previous month">
+          <ArrowLeftIcon size={18} color={colors.textSecondary} />
         </TouchableOpacity>
         <Text style={styles.monthTitle}>{formatDateMonthYear(currentMonthDate)}</Text>
-        <TouchableOpacity onPress={nextMonth} style={styles.navButton} accessibilityLabel="Next month">
-          <Text style={styles.navText}>▶</Text>
+        <TouchableOpacity onPress={nextMonth} style={styles.navButton} hitSlop={12} accessibilityLabel="Next month">
+          <ArrowRightIcon size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -155,7 +158,8 @@ export default function CalendarHeatmap({ journal, onDayPress }: CalendarHeatmap
                   <Text
                     style={[
                       styles.cellText,
-                      { color: stats.minutes > 0 ? '#F8FAFC' : colors.textSecondary },
+                      // ponytail: textPrimary reads on every heat step in both palettes; per-step contrast math if a palette change breaks it
+                      { color: stats.minutes > 0 ? colors.textPrimary : colors.textMuted },
                     ]}
                   >
                     {cell.getDate()}
@@ -170,68 +174,67 @@ export default function CalendarHeatmap({ journal, onDayPress }: CalendarHeatmap
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  navButton: {
-    padding: spacing.sm,
-  },
-  navText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-  monthTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  weekdaysRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  weekdayLabel: {
-    width: '12%',
-    textAlign: 'center',
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  grid: {
-    gap: spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cell: {
-    width: '12%',
-    aspectRatio: 1,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cellEmpty: {
-    width: '12%',
-    aspectRatio: 1,
-  },
-  cellToday: {
-    borderWidth: 2,
-    borderColor: colors.textPrimary,
-  },
-  cellText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: c.surface,
+      padding: spacing.md,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.md,
+    },
+    navButton: {
+      padding: spacing.sm,
+    },
+    monthTitle: {
+      color: c.textPrimary,
+      fontSize: 15,
+      fontWeight: '900',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+    weekdaysRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: spacing.xs,
+    },
+    weekdayLabel: {
+      width: '12%',
+      textAlign: 'center',
+      color: c.textSecondary,
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+    grid: {
+      gap: spacing.xs,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    cell: {
+      width: '12%',
+      aspectRatio: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cellEmpty: {
+      width: '12%',
+      aspectRatio: 1,
+    },
+    cellToday: {
+      borderWidth: 1,
+      borderColor: c.textPrimary,
+    },
+    cellText: {
+      fontSize: 12,
+      fontWeight: '800',
+    },
+  });

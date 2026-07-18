@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, DimensionValue } from 'react-native';
-import { colors, spacing } from '../theme';
+import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { NeoPopCard, SectionLabel } from './neopop';
 import { Session } from '../types';
 
 interface HistogramChartProps {
@@ -8,6 +9,8 @@ interface HistogramChartProps {
 }
 
 export default function HistogramChart({ sessions }: HistogramChartProps) {
+  const styles = useThemedStyles(makeStyles);
+
   // Initialize 24 hour buckets
   const hourBuckets = Array.from({ length: 24 }, () => 0);
 
@@ -17,7 +20,7 @@ export default function HistogramChart({ sessions }: HistogramChartProps) {
       if (hour >= 0 && hour < 24) {
         hourBuckets[hour]++;
       }
-    } catch (e) {
+    } catch {
       // Ignored malformed dates
     }
   });
@@ -26,13 +29,14 @@ export default function HistogramChart({ sessions }: HistogramChartProps) {
   const chartHeight = 100;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Commitments by Hour of Day</Text>
+    <NeoPopCard style={styles.container}>
+      <SectionLabel style={{ marginBottom: spacing.md }}>Commitments by Hour of Day</SectionLabel>
 
       <View style={[styles.chartArea, { height: chartHeight }]}>
         {hourBuckets.map((count, hour) => {
           const pctHeight = `${(count / maxVal) * 100}%` as DimensionValue;
           const hourStr = String(hour).padStart(2, '0');
+          const isPeak = count > 0 && count === maxVal;
 
           return (
             <View
@@ -44,10 +48,9 @@ export default function HistogramChart({ sessions }: HistogramChartProps) {
                 <View
                   style={[
                     styles.barFill,
-                    {
-                      height: pctHeight,
-                      backgroundColor: count > 0 ? colors.action : colors.border,
-                    },
+                    { height: pctHeight },
+                    count === 0 && styles.barFillEmpty,
+                    isPeak && styles.barFillPeak,
                   ]}
                 />
               </View>
@@ -59,53 +62,47 @@ export default function HistogramChart({ sessions }: HistogramChartProps) {
           );
         })}
       </View>
-    </View>
+    </NeoPopCard>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.md,
-  },
-  title: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-    marginBottom: spacing.md,
-  },
-  chartArea: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingTop: spacing.sm,
-  },
-  barColumn: {
-    flex: 1,
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  barTrack: {
-    flex: 1,
-    width: 4,
-    backgroundColor: colors.border,
-    borderRadius: 2,
-    justifyContent: 'flex-end',
-    marginBottom: 4,
-  },
-  barFill: {
-    width: '100%',
-    borderRadius: 2,
-  },
-  barLabel: {
-    color: colors.textSecondary,
-    fontSize: 9,
-    fontFamily: 'monospace',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginTop: spacing.md,
+    },
+    chartArea: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      paddingTop: spacing.sm,
+    },
+    barColumn: {
+      flex: 1,
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
+    barTrack: {
+      flex: 1,
+      width: 4,
+      backgroundColor: c.heatNone,
+      justifyContent: 'flex-end',
+      marginBottom: 4,
+    },
+    barFill: {
+      width: '100%',
+      backgroundColor: c.accent,
+    },
+    barFillEmpty: {
+      backgroundColor: c.heatNone,
+    },
+    barFillPeak: {
+      backgroundColor: c.textPrimary,
+    },
+    barLabel: {
+      color: c.textSecondary,
+      fontSize: 10,
+      fontFamily: 'monospace',
+    },
+  });

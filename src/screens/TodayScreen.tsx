@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, AppState } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, AppState } from 'react-native';
+import { alert } from '../components/alert';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, radii } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { NeoPopButton, NeoPopCard, SectionLabel, GridBackground } from '../components/neopop';
 import ApertureModule from '../native/ApertureModule';
 import { ActiveSession, CommitmentLog, Session } from '../types';
 import { formatDateLong, formatTimeShort, formatDuration, getISODateKey, gateMsForSession, peakHourRangeLabel } from '../utils/formatters';
@@ -11,26 +13,49 @@ import DailyTimeline from '../components/DailyTimeline';
 
 type ScreenState = 'idle' | 'confirming' | 'waiting' | 'gate_active';
 
+// Isolated so the per-second tick only re-renders this Text, not the screen.
+function CountdownText({ targetMs, style }: { targetMs: number; style: object }) {
+  const secondsLeft = () => Math.max(0, Math.floor((targetMs - Date.now()) / 1000));
+  const [remaining, setRemaining] = useState(secondsLeft);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const r = secondsLeft();
+      setRemaining(r);
+      if (r === 0) clearInterval(timer); // App.tsx handles the transition to GateScreen
+    }, 1000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetMs]);
+
+  const m = Math.floor(remaining / 60);
+  const s = remaining % 60;
+  return (
+    <Text style={style}>
+      {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
+    </Text>
+  );
+}
+
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [screenState, setScreenState] = useState<ScreenState>('idle');
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
-  
+
   // Custom durations (defaults loaded from settings)
   const [waitMinutes, setWaitMinutes] = useState(10);
   const [gateMinutes, setGateMinutes] = useState(15);
-  
+
   // Picker sheet controls
   const [showWaitPicker, setShowWaitPicker] = useState(false);
   const [showGatePicker, setShowGatePicker] = useState(false);
 
-  // Countdown timer
-  const [countdownRemaining, setCountdownRemaining] = useState(0);
-  
   // Today's stats
   const [todaySessions, setTodaySessions] = useState<Session[]>([]);
   const [totalGateTimeMs, setTotalGateTimeMs] = useState(0);
-  
+
   // Capabilities
   const [canScheduleAlarms, setCanScheduleAlarms] = useState(true);
   const [accessibilityEnabled, setAccessibilityEnabled] = useState(true);
@@ -114,28 +139,6 @@ export default function TodayScreen() {
     return () => subscription.remove();
   }, [checkStatus]);
 
-  // Setup JS-side countdown timer for waiting phase
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
-    if (screenState === 'waiting' && activeSession) {
-      const updateTimer = () => {
-        const start = new Date(activeSession.startedAtIso).getTime();
-        const gateStart = start + activeSession.waitingDurationMs;
-        const remaining = Math.max(0, Math.floor((gateStart - Date.now()) / 1000));
-        setCountdownRemaining(remaining);
-        
-        if (remaining === 0) {
-          clearInterval(timer);
-          // App.tsx handles the root state transition to GateScreen
-        }
-      };
-
-      updateTimer();
-      timer = setInterval(updateTimer, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [screenState, activeSession, checkStatus]);
-
   // Actions
   const handleStartRequest = () => {
     setScreenState('confirming');
@@ -152,16 +155,16 @@ export default function TodayScreen() {
       setScreenState('waiting');
     } catch (e: any) {
       if (e.code === 'ALARM_FAILED') {
-        Alert.alert('Permission Required', 'Aperture requires exact alarm permissions to enforce timers.');
+        alert('Permission Required', 'Aperture requires exact alarm permissions to enforce timers.');
       } else {
-        Alert.alert('Error', e.message || 'Failed to start session');
+        alert('Error', e.message || 'Failed to start session');
       }
       checkStatus();
     }
   };
 
   const handleCancelWaiting = async () => {
-    Alert.alert(
+    alert(
       'Cancel Commitment',
       'Are you sure you want to cancel this commitment before the gate starts?',
       [
@@ -174,7 +177,7 @@ export default function TodayScreen() {
               await ApertureModule.cancelWaitingSession();
               checkStatus();
             } catch (e: any) {
-              Alert.alert('Error', e.message || 'Failed to cancel');
+              alert('Error', e.message || 'Failed to cancel');
             }
           },
         },
@@ -185,7 +188,8 @@ export default function TodayScreen() {
   // Rendering
   const renderIdle = () => {
     return (
-      <View style={styles.card}>
+      <NeoPopCard style={styles.stateCard}>
+        <SectionLabel style={{ marginBottom: spacing.md }}>New commitment</SectionLabel>
         <View style={styles.pickerRow}>
           <TouchableOpacity onPress={() => setShowWaitPicker(true)} style={styles.pickerSelector}>
             <Text style={styles.pickerLabel}>Waiting period</Text>
@@ -198,10 +202,8 @@ export default function TodayScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.btnAction} onPress={handleStartRequest}>
-          <Text style={styles.btnActionText}>Start commitment</Text>
-        </TouchableOpacity>
-      </View>
+        <NeoPopButton title="Start commitment" arrow onPress={handleStartRequest} />
+      </NeoPopCard>
     );
   };
 
@@ -210,9 +212,11 @@ export default function TodayScreen() {
     const gateEnd = new Date(gateStart.getTime() + gateMinutes * 60000);
 
     return (
-      <View style={[styles.card, styles.cardConfirm]}>
-        <Text style={styles.confirmTitle}>Commitment Terms</Text>
-        
+      <NeoPopCard style={[styles.stateCard, styles.cardConfirm]}>
+        <SectionLabel color={colors.textPrimary} style={{ marginBottom: spacing.md }}>
+          Commitment terms
+        </SectionLabel>
+
         <View style={styles.termsRow}>
           <View>
             <Text style={styles.termsLabel}>Gate begins</Text>
@@ -229,21 +233,20 @@ export default function TodayScreen() {
         </Text>
 
         <View style={styles.btnRow}>
-          <TouchableOpacity
-            style={[styles.btnConfirm, styles.btnConfirmCancel]}
+          <NeoPopButton
+            title="Cancel"
+            variant="flat"
+            style={{ flex: 1 }}
             onPress={() => setScreenState('idle')}
-          >
-            <Text style={styles.btnConfirmCancelText}>Cancel</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.btnConfirm, styles.btnConfirmStart]}
+          />
+          <NeoPopButton
+            title="Start"
+            arrow
+            style={{ flex: 1 }}
             onPress={handleConfirmStart}
-          >
-            <Text style={styles.btnConfirmStartText}>Start</Text>
-          </TouchableOpacity>
+          />
         </View>
-      </View>
+      </NeoPopCard>
     );
   };
 
@@ -253,15 +256,11 @@ export default function TodayScreen() {
     const gateStart = new Date(start + activeSession.waitingDurationMs);
     const gateEnd = new Date(gateStart.getTime() + activeSession.gateDurationMs);
 
-    const m = Math.floor(countdownRemaining / 60);
-    const s = countdownRemaining % 60;
-    const countdownStr = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-
     // ponytail: JS-side countdown from wall clock. Ceiling: wall clock change desyncs display. Upgrade: bridge elapsedRealtime
     return (
-      <View style={[styles.card, styles.cardWaiting]}>
-        <Text style={styles.waitingTitle}>WAITING FOR GATE</Text>
-        <Text style={styles.waitingCountdown}>{countdownStr}</Text>
+      <NeoPopCard style={[styles.stateCard, styles.cardWaiting]}>
+        <SectionLabel color={colors.accent}>Waiting for gate</SectionLabel>
+        <CountdownText targetMs={gateStart.getTime()} style={styles.waitingCountdown} />
 
         <View style={styles.termsRow}>
           <View>
@@ -274,109 +273,80 @@ export default function TodayScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.btnCancel} onPress={handleCancelWaiting}>
-          <Text style={styles.btnCancelText}>Cancel commitment</Text>
-        </TouchableOpacity>
-      </View>
+        <NeoPopButton
+          title="Cancel commitment"
+          variant="flat"
+          style={{ width: '100%', marginTop: spacing.md }}
+          onPress={handleCancelWaiting}
+        />
+      </NeoPopCard>
     );
   };
 
   const renderGateActive = () => {
     return (
-      <View style={[styles.card, styles.cardActive]}>
-        <Text style={styles.activeTitle}>RELEASE GATE IS ACTIVE</Text>
+      <NeoPopCard style={[styles.stateCard, styles.cardActive]}>
+        <SectionLabel color={colors.error}>Release gate is active</SectionLabel>
         <Text style={styles.activeText}>
           Solve the arithmetic equations to release the gate. Local music is playing.
         </Text>
-        <TouchableOpacity style={styles.btnAction} onPress={() => ApertureModule.resumeGateIfActive()}>
-          <Text style={styles.btnActionText}>Open gate screen</Text>
-        </TouchableOpacity>
-      </View>
+        <NeoPopButton title="Open gate screen" arrow onPress={() => ApertureModule.resumeGateIfActive()} />
+      </NeoPopCard>
     );
   };
 
+  const permissionBanners: Array<{ visible: boolean; text: string; cta: string; onPress: () => void }> = [
+    {
+      visible: !canScheduleAlarms,
+      text: 'Aperture needs exact alarm permission for reliable gate timing.',
+      cta: 'Open Settings',
+      onPress: () => ApertureModule.openExactAlarmSettings(),
+    },
+    {
+      visible: !accessibilityEnabled,
+      text: 'Accessibility Service is required to enforce the lockout and prevent app switching.',
+      cta: 'Enable Service',
+      onPress: () => ApertureModule.openAccessibilitySettings(),
+    },
+    {
+      visible: !usageAccessGranted,
+      text: 'Usage Access allows Aperture to detect when other apps are opened during a gate.',
+      cta: 'Grant Access',
+      onPress: () => ApertureModule.openUsageAccessSettings(),
+    },
+    {
+      visible: !isIgnoringBattery,
+      text: 'Disable battery optimization to prevent the system from killing Aperture in the background.',
+      cta: 'Disable',
+      onPress: () => ApertureModule.requestIgnoreBatteryOptimizations(),
+    },
+    {
+      visible: !canDrawOverlays,
+      text: 'Overlay permission is required to launch the gate screen over other apps.',
+      cta: 'Grant Access',
+      onPress: () => ApertureModule.openOverlaySettings(),
+    },
+  ];
+
   return (
-    <ScrollView
-      style={[styles.container, { paddingTop: insets.top }]}
-      contentContainerStyle={{ paddingBottom: spacing.xl + insets.bottom }}
-    >
-      {/* Exact Alarm Permission Banner */}
-      {!canScheduleAlarms && (
-        <View style={styles.bannerAlert}>
-          <Text style={styles.bannerAlertText}>
-            Aperture needs exact alarm permission for reliable gate timing.
-          </Text>
-          <TouchableOpacity
-            style={styles.bannerAlertBtn}
-            onPress={() => ApertureModule.openExactAlarmSettings()}
-          >
-            <Text style={styles.bannerAlertBtnText}>Open Settings</Text>
+    <View style={styles.root}>
+      <GridBackground />
+      <ScrollView
+        style={[styles.container, { paddingTop: insets.top }]}
+        contentContainerStyle={{ paddingBottom: spacing.xl + insets.bottom }}
+      >
+      {permissionBanners.filter(b => b.visible).map((b, i) => (
+        <View key={i} style={styles.bannerAlert}>
+          <Text style={styles.bannerAlertText}>{b.text}</Text>
+          <TouchableOpacity style={styles.bannerAlertBtn} onPress={b.onPress}>
+            <Text style={styles.bannerAlertBtnText}>{b.cta.toUpperCase()}</Text>
           </TouchableOpacity>
         </View>
-      )}
-
-      {/* Accessibility Service Banner */}
-      {!accessibilityEnabled && (
-        <View style={styles.bannerAlert}>
-          <Text style={styles.bannerAlertText}>
-            Accessibility Service is required to enforce the lockout and prevent app switching.
-          </Text>
-          <TouchableOpacity
-            style={styles.bannerAlertBtn}
-            onPress={() => ApertureModule.openAccessibilitySettings()}
-          >
-            <Text style={styles.bannerAlertBtnText}>Enable Service</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Usage Access Banner */}
-      {!usageAccessGranted && (
-        <View style={styles.bannerAlert}>
-          <Text style={styles.bannerAlertText}>
-            Usage Access allows Aperture to detect when other apps are opened during a gate.
-          </Text>
-          <TouchableOpacity
-            style={styles.bannerAlertBtn}
-            onPress={() => ApertureModule.openUsageAccessSettings()}
-          >
-            <Text style={styles.bannerAlertBtnText}>Grant Access</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Battery Optimization Banner */}
-      {!isIgnoringBattery && (
-        <View style={styles.bannerAlert}>
-          <Text style={styles.bannerAlertText}>
-            Disable battery optimization to prevent the system from killing Aperture in the background.
-          </Text>
-          <TouchableOpacity
-            style={styles.bannerAlertBtn}
-            onPress={() => ApertureModule.requestIgnoreBatteryOptimizations()}
-          >
-            <Text style={styles.bannerAlertBtnText}>Disable</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Overlay Permission Banner */}
-      {!canDrawOverlays && (
-        <View style={styles.bannerAlert}>
-          <Text style={styles.bannerAlertText}>
-            Overlay permission is required to launch the gate screen over other apps.
-          </Text>
-          <TouchableOpacity
-            style={styles.bannerAlertBtn}
-            onPress={() => ApertureModule.openOverlaySettings()}
-          >
-            <Text style={styles.bannerAlertBtnText}>Grant Access</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      ))}
 
       {/* Date Header */}
       <View style={styles.header}>
+        <SectionLabel>Today</SectionLabel>
         <Text style={styles.dateText}>{formatDateLong(new Date())}</Text>
       </View>
 
@@ -387,8 +357,8 @@ export default function TodayScreen() {
       {screenState === 'gate_active' && renderGateActive()}
 
       {/* Daily Summary */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Today</Text>
+      <NeoPopCard style={styles.summaryCard}>
+        <SectionLabel style={{ marginBottom: spacing.md }}>Summary</SectionLabel>
         <View style={styles.summaryStats}>
           <View>
             <Text style={styles.statVal}>{todaySessions.length}</Text>
@@ -400,7 +370,7 @@ export default function TodayScreen() {
             <Text style={styles.statLabel}>gate time</Text>
           </View>
         </View>
-      </View>
+      </NeoPopCard>
 
       {/* Daily Timeline */}
       <DailyTimeline sessions={todaySessions} />
@@ -432,233 +402,167 @@ export default function TodayScreen() {
           ApertureModule.updateSettings({ defaultGateDurationMinutes: val });
         }}
       />
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-  },
-  header: {
-    paddingVertical: spacing.lg,
-  },
-  dateText: {
-    color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  bannerAlert: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    borderRadius: radii.card,
-    padding: spacing.md,
-    marginTop: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  bannerAlertText: {
-    color: '#EF4444',
-    fontSize: 12,
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  bannerAlertBtn: {
-    backgroundColor: '#EF4444',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  bannerAlertBtnText: {
-    color: '#F8FAFC',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  card: {
-    backgroundColor: '#1E293B',
-    borderRadius: radii.card,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  cardConfirm: {
-    borderColor: colors.action,
-  },
-  cardWaiting: {
-    borderColor: colors.action,
-    alignItems: 'center',
-  },
-  cardActive: {
-    borderColor: '#EF4444',
-  },
-  pickerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  pickerSelector: {
-    flex: 1,
-    padding: spacing.sm,
-  },
-  pickerLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  pickerValue: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  btnAction: {
-    backgroundColor: colors.action,
-    borderRadius: radii.button,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  btnActionText: {
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  confirmTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: spacing.md,
-  },
-  termsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-    width: '100%',
-  },
-  termsLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  termsValue: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  confirmText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: spacing.md,
-  },
-  btnRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  btnConfirm: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radii.button,
-    alignItems: 'center',
-  },
-  btnConfirmCancel: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  btnConfirmCancelText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-  btnConfirmStart: {
-    backgroundColor: colors.action,
-  },
-  btnConfirmStartText: {
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  waitingTitle: {
-    color: colors.action,
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
-  },
-  waitingCountdown: {
-    color: colors.textPrimary,
-    fontSize: 48,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-    marginVertical: spacing.md,
-  },
-  btnCancel: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.button,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    width: '100%',
-    marginTop: spacing.md,
-  },
-  btnCancelText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  activeTitle: {
-    color: '#EF4444',
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
-  },
-  activeText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: spacing.md,
-  },
-  summaryCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: radii.card,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: spacing.md,
-  },
-  summaryTitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-    marginBottom: spacing.md,
-  },
-  summaryStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statVal: {
-    color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
-  statSeparator: {
-    width: 1,
-    height: 30,
-    backgroundColor: colors.border,
-    marginHorizontal: spacing.lg,
-  },
-  insightText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: spacing.md,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: spacing.md,
+    },
+    header: {
+      paddingVertical: spacing.lg,
+      gap: spacing.xs,
+    },
+    dateText: {
+      color: c.textPrimary,
+      fontSize: 26,
+      fontWeight: '900',
+      letterSpacing: -0.5,
+    },
+    bannerAlert: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.error,
+      borderLeftWidth: 4,
+      padding: spacing.md,
+      marginTop: spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    bannerAlertText: {
+      color: c.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+      flex: 1,
+      marginRight: spacing.sm,
+    },
+    bannerAlertBtn: {
+      backgroundColor: c.error,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 6,
+    },
+    bannerAlertBtnText: {
+      color: '#FFFFFF',
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1,
+    },
+    stateCard: {
+      marginBottom: spacing.md,
+    },
+    cardConfirm: {
+      borderColor: c.textPrimary,
+    },
+    cardWaiting: {
+      borderColor: c.accent,
+      alignItems: 'center',
+    },
+    cardActive: {
+      borderColor: c.error,
+    },
+    pickerRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginBottom: spacing.md,
+    },
+    pickerSelector: {
+      flex: 1,
+      padding: spacing.sm,
+      backgroundColor: c.surfaceAlt,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    pickerLabel: {
+      color: c.textSecondary,
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginBottom: 4,
+    },
+    pickerValue: {
+      color: c.textPrimary,
+      fontSize: 20,
+      fontWeight: '900',
+    },
+    termsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: spacing.md,
+      width: '100%',
+    },
+    termsLabel: {
+      color: c.textSecondary,
+      fontSize: 12,
+      marginBottom: 2,
+    },
+    termsValue: {
+      color: c.textPrimary,
+      fontSize: 20,
+      fontWeight: '900',
+    },
+    confirmText: {
+      color: c.textSecondary,
+      fontSize: 13,
+      lineHeight: 19,
+      marginBottom: spacing.md,
+    },
+    btnRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    waitingCountdown: {
+      color: c.textPrimary,
+      fontSize: 56,
+      fontWeight: '900',
+      fontFamily: 'monospace',
+      marginVertical: spacing.md,
+    },
+    activeText: {
+      color: c.textSecondary,
+      fontSize: 14,
+      lineHeight: 20,
+      marginVertical: spacing.md,
+    },
+    summaryCard: {
+      marginTop: spacing.md,
+    },
+    summaryStats: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statVal: {
+      color: c.textPrimary,
+      fontSize: 28,
+      fontWeight: '900',
+    },
+    statLabel: {
+      color: c.textSecondary,
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginTop: 2,
+    },
+    statSeparator: {
+      width: 1,
+      height: 34,
+      backgroundColor: c.border,
+      marginHorizontal: spacing.lg,
+    },
+    insightText: {
+      color: c.textSecondary,
+      fontSize: 13,
+      textAlign: 'center',
+      marginTop: spacing.md,
+    },
+  });

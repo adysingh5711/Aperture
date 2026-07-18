@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
+import { Modal, StyleSheet, Text, View, Pressable } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { colors, spacing } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { NeoPopButton } from './neopop';
 
 interface DurationPickerSheetProps {
   visible: boolean;
@@ -18,6 +19,8 @@ export default function DurationPickerSheet({
   onCancel,
   onConfirm,
 }: DurationPickerSheetProps) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [selectedValue, setSelectedValue] = useState(initialValue);
 
   // Sync initialValue when modal opens
@@ -42,13 +45,7 @@ export default function DurationPickerSheet({
         <View style={styles.sheetContainer} onStartShouldSetResponder={() => true}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={onCancel} style={styles.btnHeader}>
-              <Text style={styles.btnCancelText}>Cancel</Text>
-            </TouchableOpacity>
             <Text style={styles.title}>{title}</Text>
-            <TouchableOpacity onPress={() => onConfirm(selectedValue)} style={styles.btnHeader}>
-              <Text style={styles.btnDoneText}>Done</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Picker */}
@@ -65,9 +62,16 @@ export default function DurationPickerSheet({
                   key={val}
                   label={`${val} minute${val > 1 ? 's' : ''}`}
                   value={val}
+                  color={colors.textPrimary}
                 />
               ))}
             </Picker>
+          </View>
+
+          {/* Actions */}
+          <View style={styles.btnRow}>
+            <NeoPopButton title="Cancel" variant="flat" style={{ flex: 1 }} onPress={onCancel} />
+            <NeoPopButton title="Done" arrow style={{ flex: 1 }} onPress={() => onConfirm(selectedValue)} />
           </View>
         </View>
       </Pressable>
@@ -75,56 +79,48 @@ export default function DurationPickerSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: spacing.xl,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  btnHeader: {
-    padding: spacing.sm,
-  },
-  btnCancelText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-  btnDoneText: {
-    color: colors.action,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  pickerContainer: {
-    paddingVertical: spacing.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  picker: {
-    width: '100%',
-    color: colors.textPrimary,
-  },
-  pickerItem: {
-    color: colors.textPrimary,
-    fontSize: 18,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    sheetContainer: {
+      backgroundColor: c.surface,
+      borderRadius: 0,
+      paddingBottom: spacing.xl,
+      borderTopWidth: 1,
+      borderColor: c.border,
+    },
+    header: {
+      padding: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    title: {
+      color: c.textPrimary,
+      fontSize: 13,
+      fontWeight: '900',
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+    },
+    pickerContainer: {
+      paddingVertical: spacing.md,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    picker: {
+      width: '100%',
+      color: c.textPrimary,
+    },
+    pickerItem: {
+      color: c.textPrimary,
+      fontSize: 18,
+    },
+    btnRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+  });

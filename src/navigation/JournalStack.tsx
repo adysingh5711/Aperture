@@ -3,24 +3,20 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { JournalStackParamList } from '../types';
 import JournalScreen from '../screens/JournalScreen';
 import DayDetailScreen from '../screens/DayDetailScreen';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 
 const Stack = createNativeStackNavigator<JournalStackParamList>();
 
 export default function JournalStack() {
+  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: {
-          backgroundColor: colors.surface,
-        },
+        headerStyle: { backgroundColor: colors.background },
+        headerShadowVisible: false,
         headerTintColor: colors.textPrimary,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        contentStyle: {
-          backgroundColor: colors.surface,
-        },
+        headerTitleStyle: { fontWeight: '900' },
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen

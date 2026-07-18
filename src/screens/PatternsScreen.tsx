@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, spacing, radii } from '../theme';
+import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { SectionLabel, GridBackground } from '../components/neopop';
 import ApertureModule from '../native/ApertureModule';
 import { CommitmentLog, Session } from '../types';
 import { formatDuration, peakHourRangeLabel } from '../utils/formatters';
@@ -13,6 +14,7 @@ const MIN_COMPLETED = 20;
 const MIN_INSIGHT_SAMPLE = 20;
 
 export default function PatternsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const [sessionsByDay, setSessionsByDay] = useState<{ [dateKey: string]: Session[] }>({});
   const [enforced, setEnforced] = useState<Session[]>([]);
   const [daysWithData, setDaysWithData] = useState(0);
@@ -40,6 +42,7 @@ export default function PatternsScreen() {
   if (!hasEnoughData) {
     return (
       <View style={styles.placeholderContainer}>
+        <GridBackground />
         <Text style={styles.placeholderText}>
           Patterns will appear after more data is collected.
         </Text>
@@ -63,8 +66,11 @@ export default function PatternsScreen() {
   const insight = enforced.length >= MIN_INSIGHT_SAMPLE ? peakHourRangeLabel(enforced) : null;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+    <View style={styles.root}>
+      <GridBackground />
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl }}>
       <View style={styles.header}>
+        <SectionLabel>Insights</SectionLabel>
         <Text style={styles.title}>Patterns</Text>
       </View>
 
@@ -87,65 +93,74 @@ export default function PatternsScreen() {
       </View>
 
       {insight && <Text style={styles.insightText}>{insight}</Text>}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-  },
-  header: {
-    paddingVertical: spacing.lg,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  placeholderContainer: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  placeholderText: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    textAlign: 'center',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginTop: spacing.md,
-    gap: spacing.sm,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#1E293B',
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    alignItems: 'center',
-  },
-  statVal: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  insightText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: spacing.md,
+    },
+    header: {
+      paddingVertical: spacing.lg,
+      gap: spacing.xs,
+    },
+    title: {
+      color: c.textPrimary,
+      fontSize: 26,
+      fontWeight: '900',
+      letterSpacing: -0.5,
+    },
+    placeholderContainer: {
+      flex: 1,
+      backgroundColor: c.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+    placeholderText: {
+      color: c.textSecondary,
+      fontSize: 15,
+      textAlign: 'center',
+    },
+    statsRow: {
+      flexDirection: 'row',
+      marginTop: spacing.md,
+      gap: spacing.sm,
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: spacing.md,
+      alignItems: 'center',
+    },
+    statVal: {
+      color: c.textPrimary,
+      fontSize: 20,
+      fontWeight: '900',
+    },
+    statLabel: {
+      color: c.textSecondary,
+      fontSize: 10,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginTop: 4,
+      textAlign: 'center',
+    },
+    insightText: {
+      color: c.textSecondary,
+      fontSize: 13,
+      textAlign: 'center',
+      marginTop: spacing.lg,
+    },
+  });

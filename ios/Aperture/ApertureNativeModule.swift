@@ -357,6 +357,7 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
     if let shuffle = input["shuffleKeypad"] as? Bool { settings["shuffleKeypad"] = shuffle }
     if let wait = input["defaultWaitingDurationMinutes"] as? Int { settings["defaultWaitingDurationMinutes"] = wait }
     if let gate = input["defaultGateDurationMinutes"] as? Int { settings["defaultGateDurationMinutes"] = gate }
+    if let mode = input["themeMode"] as? String { settings["themeMode"] = mode }
     saveSettings(settings)
     resolve(nil)
   }
@@ -590,7 +591,7 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
       return json
     }
-    return ["difficulty": "standard", "shuffleKeypad": false, "defaultWaitingDurationMinutes": 10, "defaultGateDurationMinutes": 15]
+    return ["difficulty": "standard", "shuffleKeypad": false, "defaultWaitingDurationMinutes": 10, "defaultGateDurationMinutes": 15, "themeMode": "system"]
   }
 
   private func saveSettings(_ settings: [String: Any]) {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View, Pressable, Platform } from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { colors, spacing } from '../theme';
+import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { NeoPopButton } from './neopop';
 import ApertureModule from '../native/ApertureModule';
 
 interface ManualEntrySheetProps {
@@ -11,6 +12,7 @@ interface ManualEntrySheetProps {
 }
 
 export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEntrySheetProps) {
+  const styles = useThemedStyles(makeStyles);
   const [date, setDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(new Date());
@@ -98,13 +100,7 @@ export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEn
         <View style={styles.sheetContainer} onStartShouldSetResponder={() => true}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={onCancel} style={styles.btnHeader}>
-              <Text style={styles.btnCancelText}>Cancel</Text>
-            </TouchableOpacity>
             <Text style={styles.title}>Manual Entry</Text>
-            <TouchableOpacity onPress={handleSave} style={styles.btnHeader}>
-              <Text style={styles.btnSaveText}>Save</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Form */}
@@ -166,6 +162,12 @@ export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEn
                 onChange={onEndChange}
               />
             )}
+
+            {/* Actions */}
+            <View style={styles.btnRow}>
+              <NeoPopButton title="Cancel" variant="flat" style={{ flex: 1 }} onPress={onCancel} />
+              <NeoPopButton title="Save" arrow style={{ flex: 1 }} onPress={handleSave} />
+            </View>
           </View>
         </View>
       </Pressable>
@@ -173,82 +175,81 @@ export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEn
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: spacing.xl,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  btnHeader: {
-    padding: spacing.sm,
-  },
-  btnCancelText: {
-    color: colors.textSecondary,
-    fontSize: 16,
-  },
-  btnSaveText: {
-    color: colors.action,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  form: {
-    padding: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  rowLabel: {
-    color: colors.textPrimary,
-    fontSize: 16,
-  },
-  rowValue: {
-    backgroundColor: '#1E293B',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
-  },
-  valueText: {
-    color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  errorContainer: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    padding: spacing.sm,
-    borderRadius: 8,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.5)',
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    sheetContainer: {
+      backgroundColor: c.surface,
+      borderRadius: 0,
+      paddingBottom: spacing.xl,
+      borderTopWidth: 1,
+      borderColor: c.border,
+    },
+    header: {
+      padding: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    title: {
+      color: c.textPrimary,
+      fontSize: 13,
+      fontWeight: '900',
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+    },
+    form: {
+      padding: spacing.md,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    rowLabel: {
+      color: c.textSecondary,
+      fontSize: 11,
+      fontWeight: '800',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+    },
+    rowValue: {
+      backgroundColor: c.surfaceAlt,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: 0,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    valueText: {
+      color: c.textPrimary,
+      fontSize: 14,
+      fontWeight: '800',
+    },
+    errorContainer: {
+      backgroundColor: c.surfaceAlt,
+      padding: spacing.sm,
+      borderRadius: 0,
+      marginBottom: spacing.md,
+      borderWidth: 1,
+      borderColor: c.error,
+      borderLeftWidth: 4,
+    },
+    errorText: {
+      color: c.error,
+      fontSize: 13,
+      fontWeight: '700',
+      textAlign: 'center',
+    },
+    btnRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.lg,
+    },
+  });

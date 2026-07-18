@@ -20,7 +20,11 @@ import android.view.animation.TranslateAnimation
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.cardview.widget.CardView
 import androidx.core.view.WindowCompat
 import com.aperture.R
@@ -46,7 +50,7 @@ class GateActivity : AppCompatActivity() {
     private lateinit var tvQuestion: TextView
     private lateinit var etAnswer: EditText
     private lateinit var tvTrackTitle: TextView
-    private lateinit var btnPlayPause: Button
+    private lateinit var btnPlayPause: ImageButton
 
     private var activeSession: ActiveSession? = null
     private var challengeEngine: ChallengeEngine? = null
@@ -77,7 +81,7 @@ class GateActivity : AppCompatActivity() {
             val title = intent.getStringExtra("title") ?: "No Track Playing"
             val isPlaying = intent.getBooleanExtra("isPlaying", false)
             tvTrackTitle.text = title
-            btnPlayPause.text = if (isPlaying) "⏸" else "▶"
+            btnPlayPause.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
         }
     }
 
@@ -87,7 +91,14 @@ class GateActivity : AppCompatActivity() {
             savedInstanceState.remove("androidx:lifecycle:saved_state_registry")
         }
         super.onCreate(null)
-        
+
+        // Follow the app's theme setting so day/night resources resolve correctly
+        delegate.localNightMode = when (runBlocking { settingsRepo.read().themeMode }) {
+            "light" -> AppCompatDelegate.MODE_NIGHT_NO
+            "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+
         // Ensure activity shows over lockscreen and turns screen on
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -277,29 +288,27 @@ class GateActivity : AppCompatActivity() {
     private fun setupKeypad() {
         val clickListener = View.OnClickListener { v ->
             if (v is Button) {
-                val txt = v.text.toString()
-                if (txt == "⌫") {
-                    val current = etAnswer.text.toString()
-                    if (current.isNotEmpty()) {
-                        etAnswer.setText(current.substring(0, current.length - 1))
-                    }
-                } else if (txt == "→") {
-                    submitAnswer()
-                } else {
-                    etAnswer.append(txt)
-                }
+                etAnswer.append(v.text.toString())
             }
         }
 
         val keyIds = listOf(
             R.id.btn_key_0, R.id.btn_key_1, R.id.btn_key_2, R.id.btn_key_3,
             R.id.btn_key_4, R.id.btn_key_5, R.id.btn_key_6, R.id.btn_key_7,
-            R.id.btn_key_8, R.id.btn_key_9, R.id.btn_key_backspace, R.id.btn_key_submit
+            R.id.btn_key_8, R.id.btn_key_9
         )
 
         for (id in keyIds) {
             findViewById<Button>(id).setOnClickListener(clickListener)
         }
+
+        findViewById<View>(R.id.btn_key_backspace).setOnClickListener {
+            val current = etAnswer.text.toString()
+            if (current.isNotEmpty()) {
+                etAnswer.setText(current.substring(0, current.length - 1))
+            }
+        }
+        findViewById<View>(R.id.btn_key_submit).setOnClickListener { submitAnswer() }
     }
 
     private fun resetKeypadOrder() {
@@ -382,9 +391,9 @@ class GateActivity : AppCompatActivity() {
             interpolator = CycleInterpolator(4f)
         }
         etAnswer.startAnimation(shake)
-        etAnswer.setBackgroundColor(0x33FF0000)
+        etAnswer.setBackgroundColor(ColorUtils.setAlphaComponent(ContextCompat.getColor(this, R.color.np_error), 0x33))
         etAnswer.postDelayed({
-            etAnswer.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            etAnswer.setBackgroundResource(R.drawable.neopop_panel)
         }, 300)
     }
 
@@ -451,11 +460,11 @@ class GateActivity : AppCompatActivity() {
             }
             tvOutcome.text = "Solved $timeSpentStr!"
             displayLabel.text = "RELEASED"
-            displayLabel.setTextColor(0xFF3B82F6.toInt())
+            displayLabel.setTextColor(ContextCompat.getColor(this, R.color.np_accent))
         } else {
             tvOutcome.text = "Gate ended automatically"
             displayLabel.text = "TIMEOUT"
-            displayLabel.setTextColor(0xFF94A3B8.toInt())
+            displayLabel.setTextColor(ContextCompat.getColor(this, R.color.np_text_secondary))
         }
 
         findViewById<Button>(R.id.btn_release_return).setOnClickListener {
@@ -482,13 +491,13 @@ class GateActivity : AppCompatActivity() {
             startService(controlIntent)
         }
 
-        findViewById<Button>(R.id.btn_media_shuffle).setOnClickListener { sendCommand("shuffle") }
-        findViewById<Button>(R.id.btn_media_rewind).setOnClickListener { sendCommand("rewind") }
-        findViewById<Button>(R.id.btn_media_prev).setOnClickListener { sendCommand("prev") }
+        findViewById<View>(R.id.btn_media_shuffle).setOnClickListener { sendCommand("shuffle") }
+        findViewById<View>(R.id.btn_media_rewind).setOnClickListener { sendCommand("rewind") }
+        findViewById<View>(R.id.btn_media_prev).setOnClickListener { sendCommand("prev") }
         btnPlayPause.setOnClickListener { sendCommand("play_pause") }
-        findViewById<Button>(R.id.btn_media_next).setOnClickListener { sendCommand("next") }
-        findViewById<Button>(R.id.btn_media_forward).setOnClickListener { sendCommand("forward") }
-        findViewById<Button>(R.id.btn_media_random).setOnClickListener { sendCommand("random") }
+        findViewById<View>(R.id.btn_media_next).setOnClickListener { sendCommand("next") }
+        findViewById<View>(R.id.btn_media_forward).setOnClickListener { sendCommand("forward") }
+        findViewById<View>(R.id.btn_media_random).setOnClickListener { sendCommand("random") }
     }
 
     private fun startPlaybackService() {

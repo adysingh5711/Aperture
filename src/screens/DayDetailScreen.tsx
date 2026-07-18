@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
-import { colors, spacing, radii } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { SectionLabel } from '../components/neopop';
+import { DotsIcon } from '../components/icons';
 import ApertureModule from '../native/ApertureModule';
 import { CommitmentLog, JournalStackParamList, Session } from '../types';
 import { formatDuration, formatTimeShort, deriveOutcome, gateMsForSession } from '../utils/formatters';
@@ -18,6 +20,8 @@ const OUTCOME_LABEL: Record<string, string> = {
 export default function DayDetailScreen() {
   const route = useRoute<RouteProp<JournalStackParamList, 'DayDetail'>>();
   const { date } = route.params;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
@@ -70,7 +74,7 @@ export default function DayDetailScreen() {
             style={styles.overflowBtn}
             onPress={() => setOpenMenuId(openMenuId === s.id ? null : s.id)}
           >
-            <Text style={styles.overflowText}>⋯</Text>
+            <DotsIcon size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
         {openMenuId === s.id && (
@@ -91,6 +95,7 @@ export default function DayDetailScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl }}>
       <View style={styles.header}>
+        <SectionLabel>Day detail</SectionLabel>
         <Text style={styles.summaryText}>
           {sessions.length} commitment{sessions.length === 1 ? '' : 's'} · {formatDuration(totalGateMs)} gate time
         </Text>
@@ -115,74 +120,74 @@ export default function DayDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-  },
-  header: {
-    paddingVertical: spacing.lg,
-  },
-  summaryText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: spacing.xl,
-  },
-  list: {
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: '#1E293B',
-  },
-  rowText: {
-    flex: 1,
-  },
-  startText: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  detailText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginTop: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  overflowBtn: {
-    padding: spacing.xs,
-  },
-  overflowText: {
-    color: colors.textSecondary,
-    fontSize: 20,
-  },
-  menuItem: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.lg,
-    backgroundColor: colors.border,
-    borderRadius: 8,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  menuItemText: {
-    color: colors.action,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+      paddingHorizontal: spacing.md,
+    },
+    header: {
+      paddingVertical: spacing.lg,
+      gap: spacing.xs,
+    },
+    summaryText: {
+      color: c.textPrimary,
+      fontSize: 20,
+      fontWeight: '900',
+    },
+    emptyText: {
+      color: c.textSecondary,
+      fontSize: 14,
+      textAlign: 'center',
+      marginTop: spacing.xl,
+    },
+    list: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    rowText: {
+      flex: 1,
+    },
+    startText: {
+      color: c.textPrimary,
+      fontSize: 15,
+      fontWeight: '800',
+      fontVariant: ['tabular-nums'],
+    },
+    detailText: {
+      color: c.textSecondary,
+      fontSize: 13,
+      marginTop: 2,
+      fontVariant: ['tabular-nums'],
+    },
+    overflowBtn: {
+      padding: spacing.xs,
+    },
+    menuItem: {
+      position: 'absolute',
+      top: spacing.md,
+      right: spacing.lg,
+      backgroundColor: c.surfaceAlt,
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    menuItemText: {
+      color: c.textPrimary,
+      fontSize: 12,
+      fontWeight: '800',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+  });

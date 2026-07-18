@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, BackHandler } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, BackHandler } from 'react-native';
+import { alert } from '../components/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, spacing, radii } from '../theme';
+import { spacing, depth, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { ArrowRightIcon, BackspaceIcon } from '../components/icons';
 import ApertureModule from '../native/ApertureModule';
 import { ActiveSession } from '../types';
-import { formatTimeShort } from '../utils/formatters';
 
 interface Step {
   operandA: number;
@@ -95,6 +96,8 @@ class JSChallengeEngine {
 
 export default function GateScreen({ session, onRelease }: { session: ActiveSession, onRelease: () => void }) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [stepIndex, setStepIndex] = useState(session.operationIndex);
   const [answer, setAnswer] = useState('');
   const [difficulty, setDifficulty] = useState('standard');
@@ -142,27 +145,34 @@ export default function GateScreen({ session, onRelease }: { session: ActiveSess
         await ApertureModule.updateOperationIndex(nextIndex);
       }
     } else {
-      Alert.alert('Incorrect', 'Please try again.');
+      alert('Incorrect', 'Please try again.');
       setAnswer('');
     }
   };
 
   const renderKeypad = () => {
-    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', '→'];
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'back', '0', 'submit'];
     return (
       <View style={styles.keypad}>
         {keys.map(k => (
           <TouchableOpacity
             key={k}
-            style={styles.key}
+            style={[styles.key, k === 'submit' && styles.keySubmit]}
             activeOpacity={0.6}
+            accessibilityLabel={k === 'back' ? 'Backspace' : k === 'submit' ? 'Submit answer' : undefined}
             onPress={() => {
-              if (k === '⌫') setAnswer(prev => prev.slice(0, -1));
-              else if (k === '→') handleSubmit();
+              if (k === 'back') setAnswer(prev => prev.slice(0, -1));
+              else if (k === 'submit') handleSubmit();
               else setAnswer(prev => prev + k);
             }}
           >
-            <Text style={styles.keyText}>{k}</Text>
+            {k === 'back' ? (
+              <BackspaceIcon size={26} color={colors.textSecondary} />
+            ) : k === 'submit' ? (
+              <ArrowRightIcon size={26} color={colors.ctaText} />
+            ) : (
+              <Text style={styles.keyText}>{k}</Text>
+            )}
           </TouchableOpacity>
         ))}
       </View>
@@ -190,10 +200,11 @@ export default function GateScreen({ session, onRelease }: { session: ActiveSess
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: c.gateBg,
     padding: spacing.lg,
     justifyContent: 'space-between',
   },
@@ -201,14 +212,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   countdown: {
-    color: '#EF4444',
-    fontSize: 48,
-    fontWeight: 'bold',
+    color: c.textPrimary,
+    fontSize: 60,
+    fontWeight: '900',
     fontFamily: 'monospace',
   },
   progress: {
-    color: colors.textSecondary,
-    fontSize: 16,
+    color: c.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginTop: spacing.xs,
   },
   challengeArea: {
@@ -216,22 +230,26 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xl,
   },
   question: {
-    color: colors.textPrimary,
+    color: c.textPrimary,
     fontSize: 40,
-    fontWeight: 'bold',
+    fontWeight: '900',
     marginBottom: spacing.lg,
   },
   answerBox: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.action,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: c.border,
+    backgroundColor: c.surface,
     minWidth: 150,
     alignItems: 'center',
-    paddingBottom: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   answerText: {
-    color: colors.action,
+    color: c.textPrimary,
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '900',
+    fontFamily: 'monospace',
   },
   keypad: {
     flexDirection: 'row',
@@ -242,18 +260,25 @@ const styles = StyleSheet.create({
   key: {
     width: '28%',
     aspectRatio: 1,
-    backgroundColor: '#1E293B',
-    borderRadius: radii.card,
+    backgroundColor: c.surface,
+    borderRadius: 0,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
+  },
+  // ponytail: plunk edge faked with thick right/bottom borders instead of the plate+face pattern — good enough for a static keypad key
+  keySubmit: {
+    backgroundColor: c.ctaFace,
+    borderColor: c.ctaEdge,
+    borderRightWidth: depth,
+    borderBottomWidth: depth,
   },
   keyText: {
-    color: colors.textPrimary,
+    color: c.textPrimary,
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'center',
     includeFontPadding: false,
   },
-});
+  });
