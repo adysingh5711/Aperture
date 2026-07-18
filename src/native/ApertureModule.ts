@@ -66,6 +66,7 @@ export interface ApertureModuleType {
   openUsageAccessSettings(): void;
   requestIgnoreBatteryOptimizations(): void;
   openOverlaySettings(): void;
+  playTick(): void;
   stopPinning(): Promise<void>;
 }
 
@@ -218,6 +219,7 @@ const ApertureModuleFallback: ApertureModuleType = {
   openUsageAccessSettings: () => {},
   requestIgnoreBatteryOptimizations: () => {},
   openOverlaySettings: () => {},
+  playTick: () => {},
   stopPinning: async () => {},
 };
 

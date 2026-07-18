@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, StyleSheet, Text, View, Pressable } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, useThemedStyles, ThemeColors } from '../theme';
 import { NeoPopButton } from './neopop';
+import { Wheel, WheelBand } from './wheel';
+
+const MINUTE_LABELS = Array.from({ length: 60 }, (_, i) => String(i + 1));
 
 interface DurationPickerSheetProps {
   visible: boolean;
@@ -19,7 +21,6 @@ export default function DurationPickerSheet({
   onCancel,
   onConfirm,
 }: DurationPickerSheetProps) {
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [selectedValue, setSelectedValue] = useState(initialValue);
 
@@ -30,9 +31,6 @@ export default function DurationPickerSheet({
     }
   }, [visible, initialValue]);
 
-  // Generate 1-60 list
-  const pickerItems = Array.from({ length: 60 }, (_, i) => i + 1);
-
   // ponytail: Modal bottom sheet instead of heavy library. Ceiling: no drag-to-dismiss gesture. Upgrade: @gorhom/bottom-sheet
   return (
     <Modal
@@ -41,32 +39,25 @@ export default function DurationPickerSheet({
       animationType="slide"
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.overlay} onPress={onCancel}>
-        <View style={styles.sheetContainer} onStartShouldSetResponder={() => true}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+        <View style={styles.sheetContainer}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
           </View>
 
-          {/* Picker */}
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedValue}
-              onValueChange={(itemValue) => setSelectedValue(itemValue)}
-              style={styles.picker}
-              itemStyle={styles.pickerItem}
-              dropdownIconColor={colors.textPrimary}
-            >
-              {pickerItems.map((val) => (
-                <Picker.Item
-                  key={val}
-                  label={`${val} minute${val > 1 ? 's' : ''}`}
-                  value={val}
-                  color={colors.textPrimary}
-                />
-              ))}
-            </Picker>
-          </View>
+          {/* Wheel */}
+          {visible && (
+            <View style={styles.wheelWrap}>
+              <WheelBand label="MIN" />
+              <Wheel
+                labels={MINUTE_LABELS}
+                index={selectedValue - 1}
+                onIndexChange={i => setSelectedValue(i + 1)}
+              />
+            </View>
+          )}
 
           {/* Actions */}
           <View style={styles.btnRow}>
@@ -74,7 +65,7 @@ export default function DurationPickerSheet({
             <NeoPopButton title="Done" arrow style={{ flex: 1 }} onPress={() => onConfirm(selectedValue)} />
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
@@ -105,18 +96,8 @@ const makeStyles = (c: ThemeColors) =>
       letterSpacing: 2,
       textTransform: 'uppercase',
     },
-    pickerContainer: {
-      paddingVertical: spacing.md,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    picker: {
-      width: '100%',
-      color: c.textPrimary,
-    },
-    pickerItem: {
-      color: c.textPrimary,
-      fontSize: 18,
+    wheelWrap: {
+      marginVertical: spacing.md,
     },
     btnRow: {
       flexDirection: 'row',

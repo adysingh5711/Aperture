@@ -72,6 +72,7 @@ RCT_EXTERN_METHOD(openAccessibilitySettings)
 RCT_EXTERN_METHOD(openUsageAccessSettings)
 RCT_EXTERN_METHOD(requestIgnoreBatteryOptimizations)
 RCT_EXTERN_METHOD(openOverlaySettings)
+RCT_EXTERN_METHOD(playTick)
 RCT_EXTERN_METHOD(stopPinning:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 

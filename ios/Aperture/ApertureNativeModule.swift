@@ -1,3 +1,4 @@
+import AudioToolbox
 import Foundation
 import React
 import AVFoundation
@@ -631,6 +632,10 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
   @objc func openAccessibilitySettings() {}
   @objc func openUsageAccessSettings() {}
   @objc func requestIgnoreBatteryOptimizations() {}
+  @objc func playTick() {
+    AudioServicesPlaySystemSound(1104) // keyboard tick
+  }
+
   @objc func openOverlaySettings() {}
   @objc func stopPinning(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) { resolve(nil) }
 }

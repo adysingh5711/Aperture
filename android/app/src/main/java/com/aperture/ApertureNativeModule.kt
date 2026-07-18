@@ -6,6 +6,7 @@ import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
@@ -128,6 +129,13 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
         } catch (e: Exception) {
             Log.e(TAG, "Failed to request ignore battery optimizations", e)
         }
+    }
+
+    @ReactMethod
+    fun playTick() {
+        // iOS-picker-style tick: system key-click, respects the OS sound-effects toggle
+        val am = reactApplicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        am.playSoundEffect(AudioManager.FX_KEY_CLICK, 0.5f)
     }
 
     @ReactMethod

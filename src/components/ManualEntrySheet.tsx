@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { WheelDatePicker, WheelTimePicker } from './wheel';
 import { NeoPopButton } from './neopop';
 import ApertureModule from '../native/ApertureModule';
 
@@ -17,34 +17,10 @@ export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEn
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(new Date());
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
+  // Accordion: one inline wheel open at a time
+  const [activePicker, setActivePicker] = useState<'date' | 'start' | 'end' | null>(null);
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
-
-  const onStartChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
-    setShowStartPicker(false);
-    if (selectedTime) {
-      setStartTime(selectedTime);
-      setErrorMsg(null);
-    }
-  };
-
-  const onEndChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
-    setShowEndPicker(false);
-    if (selectedTime) {
-      setEndTime(selectedTime);
-      setErrorMsg(null);
-    }
-  };
 
   const handleSave = async () => {
     // Construct start and end dates by combining selected date and selected times
@@ -96,8 +72,9 @@ export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEn
       animationType="slide"
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.overlay} onPress={onCancel}>
-        <View style={styles.sheetContainer} onStartShouldSetResponder={() => true}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+        <View style={styles.sheetContainer}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Manual Entry</Text>
@@ -114,52 +91,52 @@ export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEn
             {/* Date Select */}
             <View style={styles.row}>
               <Text style={styles.rowLabel}>Date</Text>
-              <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.rowValue}>
+              <TouchableOpacity
+                onPress={() => setActivePicker(p => (p === 'date' ? null : 'date'))}
+                style={[styles.rowValue, activePicker === 'date' && styles.rowValueActive]}
+              >
                 <Text style={styles.valueText}>{formatDateString(date)}</Text>
               </TouchableOpacity>
             </View>
+            {activePicker === 'date' && <WheelDatePicker value={date} onChange={setDate} />}
 
             {/* Start Time Select */}
             <View style={styles.row}>
               <Text style={styles.rowLabel}>Start Time</Text>
-              <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.rowValue}>
+              <TouchableOpacity
+                onPress={() => setActivePicker(p => (p === 'start' ? null : 'start'))}
+                style={[styles.rowValue, activePicker === 'start' && styles.rowValueActive]}
+              >
                 <Text style={styles.valueText}>{formatTimeString(startTime)}</Text>
               </TouchableOpacity>
             </View>
+            {activePicker === 'start' && (
+              <WheelTimePicker
+                value={startTime}
+                onChange={d => {
+                  setStartTime(d);
+                  setErrorMsg(null);
+                }}
+              />
+            )}
 
             {/* End Time Select */}
             <View style={styles.row}>
               <Text style={styles.rowLabel}>End Time</Text>
-              <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.rowValue}>
+              <TouchableOpacity
+                onPress={() => setActivePicker(p => (p === 'end' ? null : 'end'))}
+                style={[styles.rowValue, activePicker === 'end' && styles.rowValueActive]}
+              >
                 <Text style={styles.valueText}>{formatTimeString(endTime)}</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Picker triggers */}
-            {showDatePicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="default"
-                onChange={onDateChange}
-              />
-            )}
-            {showStartPicker && (
-              <DateTimePicker
-                value={startTime}
-                mode="time"
-                is24Hour={false}
-                display="default"
-                onChange={onStartChange}
-              />
-            )}
-            {showEndPicker && (
-              <DateTimePicker
+            {activePicker === 'end' && (
+              <WheelTimePicker
                 value={endTime}
-                mode="time"
-                is24Hour={false}
-                display="default"
-                onChange={onEndChange}
+                onChange={d => {
+                  setEndTime(d);
+                  setErrorMsg(null);
+                }}
               />
             )}
 
@@ -170,7 +147,7 @@ export default function ManualEntrySheet({ visible, onCancel, onSave }: ManualEn
             </View>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
@@ -226,6 +203,9 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 0,
       borderWidth: 1,
       borderColor: c.border,
+    },
+    rowValueActive: {
+      borderColor: c.accent,
     },
     valueText: {
       color: c.textPrimary,

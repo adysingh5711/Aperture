@@ -36,7 +36,7 @@
 
       <activity
         android:name=".gate.GateActivity"
-        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:theme="@style/GateTheme"
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
         android:launchMode="singleInstance"
         android:taskAffinity="com.aperture.gate"

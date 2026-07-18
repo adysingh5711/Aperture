@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
 import { alert } from './alert';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { WheelTimePicker } from './wheel';
 import { NeoPopButton } from './neopop';
 import { Session } from '../types';
 import ApertureModule from '../native/ApertureModule';
@@ -28,14 +28,6 @@ export default function EditEndSheet({ visible, session, onCancel, onSave }: Edi
   }, [visible, session]);
 
   if (!session) return null;
-
-  const onTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
-    setShowPicker(false);
-    if (selectedTime) {
-      setEndTime(selectedTime);
-      setErrorMsg(null);
-    }
-  };
 
   const handleSave = async (force: boolean = false) => {
     const start = new Date(session.start);
@@ -95,8 +87,9 @@ export default function EditEndSheet({ visible, session, onCancel, onSave }: Edi
       animationType="slide"
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.overlay} onPress={onCancel}>
-        <View style={styles.sheetContainer} onStartShouldSetResponder={() => true}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+        <View style={styles.sheetContainer}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Edit End Time</Text>
@@ -122,18 +115,21 @@ export default function EditEndSheet({ visible, session, onCancel, onSave }: Edi
             {/* End Time Select */}
             <View style={styles.row}>
               <Text style={styles.rowLabel}>New End Time</Text>
-              <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.rowValue}>
+              <TouchableOpacity
+                onPress={() => setShowPicker(p => !p)}
+                style={[styles.rowValue, showPicker && styles.rowValueActive]}
+              >
                 <Text style={styles.valueText}>{formatTimeString(endTime)}</Text>
               </TouchableOpacity>
             </View>
 
             {showPicker && (
-              <DateTimePicker
+              <WheelTimePicker
                 value={endTime}
-                mode="time"
-                is24Hour={false}
-                display="default"
-                onChange={onTimeChange}
+                onChange={d => {
+                  setEndTime(d);
+                  setErrorMsg(null);
+                }}
               />
             )}
 
@@ -144,7 +140,7 @@ export default function EditEndSheet({ visible, session, onCancel, onSave }: Edi
             </View>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
@@ -205,6 +201,9 @@ const makeStyles = (c: ThemeColors) =>
       borderRadius: 0,
       borderWidth: 1,
       borderColor: c.border,
+    },
+    rowValueActive: {
+      borderColor: c.accent,
     },
     valueText: {
       color: c.textPrimary,

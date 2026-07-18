@@ -4,6 +4,14 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Loading any system sound effect (wheel tick) would otherwise switch on
+             automatic click sounds for every clickable view. Explicit
+             AudioManager.playSoundEffect calls ignore this flag. -->
+        <item name="android:soundEffectsEnabled">false</item>
+    </style>
+
+    <style name="GateTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:soundEffectsEnabled">false</item>
     </style>
 
 </resources>
