@@ -264,6 +264,7 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
 
   func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
     guard let url = urls.first, let resolve = currentPickPromise else { return }
+    let rejecter = currentPickReject
     currentPickPromise = nil
     currentPickReject = nil
 
@@ -271,6 +272,11 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
     defer { if shouldStopAccessing { url.stopAccessingSecurityScopedResource() } }
 
     let fileName = url.lastPathComponent
+    let existingItems = readMusicLibrary()["music"] as? [[String: Any]] ?? []
+    if existingItems.contains(where: { ($0["displayName"] as? String) == fileName }) {
+      rejecter?("DUPLICATE", "\"\(fileName)\" is already in your library", nil)
+      return
+    }
     let destUrl = getMusicDir().appendingPathComponent(UUID().uuidString + "_" + fileName)
 
     do {
@@ -300,7 +306,7 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
 
       resolve(serialize(item))
     } catch {
-      currentPickReject?("IMPORT_FAILED", error.localizedDescription, error)
+      rejecter?("IMPORT_FAILED", error.localizedDescription, error)
     }
   }
 

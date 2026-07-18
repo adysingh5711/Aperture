@@ -62,7 +62,11 @@ export default function SoundLibraryScreen() {
       const json = await ApertureModule.pickAndAddMusic();
       if (json) load();
     } catch (e: any) {
-      alert('Could not add file', e.message || 'Try a different file');
+      if (e.code === 'DUPLICATE') {
+        alert('Already added', e.message);
+      } else {
+        alert('Could not add file', e.message || 'Try a different file');
+      }
     }
   };
 

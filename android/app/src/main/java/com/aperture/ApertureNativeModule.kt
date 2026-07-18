@@ -438,6 +438,12 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                         }
                     }
 
+                    val duplicate = runBlocking { musicRepo.read() }.music.any { it.displayName == displayName }
+                    if (duplicate) {
+                        promise.reject("DUPLICATE", "\"$displayName\" is already in your library")
+                        return
+                    }
+
                     var durationMs = 0L
                     val retriever = MediaMetadataRetriever()
                     try {

@@ -19,6 +19,7 @@ import android.view.animation.CycleInterpolator
 import android.view.animation.TranslateAnimation
 import android.widget.Button
 import android.widget.EditText
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
@@ -51,6 +52,10 @@ class GateActivity : AppCompatActivity() {
     private lateinit var etAnswer: EditText
     private lateinit var tvTrackTitle: TextView
     private lateinit var btnPlayPause: ImageButton
+    private lateinit var seekBar: SeekBar
+    private lateinit var tvSeekPosition: TextView
+    private lateinit var tvSeekDuration: TextView
+    private var isSeeking = false
 
     private var activeSession: ActiveSession? = null
     private var challengeEngine: ChallengeEngine? = null
@@ -82,6 +87,7 @@ class GateActivity : AppCompatActivity() {
             val isPlaying = intent.getBooleanExtra("isPlaying", false)
             tvTrackTitle.text = title
             btnPlayPause.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            updateSeekUi(intent.getLongExtra("position", 0L), intent.getLongExtra("duration", 0L))
         }
     }
 
@@ -482,11 +488,56 @@ class GateActivity : AppCompatActivity() {
         // Pinning UI completely removed
     }
 
+    private fun formatClock(ms: Long): String =
+        String.format("%d:%02d", ms / 60000, (ms / 1000) % 60)
+
+    private fun updateSeekUi(positionMs: Long, durationMs: Long) {
+        if (isSeeking) return
+        if (durationMs > 0) {
+            seekBar.isEnabled = true
+            seekBar.max = (durationMs / 1000).toInt().coerceAtLeast(1)
+            seekBar.setProgress((positionMs / 1000).toInt(), true)
+            tvSeekDuration.text = formatClock(durationMs)
+        } else {
+            seekBar.isEnabled = false
+            seekBar.max = 1
+            seekBar.progress = 0
+            tvSeekDuration.text = "0:00"
+        }
+        tvSeekPosition.text = formatClock(positionMs.coerceAtLeast(0L))
+    }
+
     private fun setupMediaControls() {
+        seekBar = findViewById(R.id.seek_playback)
+        tvSeekPosition = findViewById(R.id.tv_seek_position)
+        tvSeekDuration = findViewById(R.id.tv_seek_duration)
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar, progress: Int, fromUser: Boolean) {
+                // Live label while dragging; playback position is applied on release.
+                if (fromUser) tvSeekPosition.text = formatClock(progress * 1000L)
+            }
+
+            override fun onStartTrackingTouch(sb: SeekBar) {
+                isSeeking = true
+            }
+
+            override fun onStopTrackingTouch(sb: SeekBar) {
+                isSeeking = false
+                val seekIntent = Intent(this@GateActivity, PlaybackService::class.java).apply {
+                    action = PlaybackService.ACTION_PLAYBACK_CONTROL
+                    putExtra(PlaybackService.EXTRA_COMMAND, "seek_to")
+                    putExtra(PlaybackService.EXTRA_SEEK_POSITION, sb.progress * 1000L)
+                }
+                startService(seekIntent)
+            }
+        })
+
         val sendCommand = { cmd: String ->
-            val controlIntent = Intent(PlaybackService.ACTION_PLAYBACK_CONTROL).apply {
+            // Must be explicit: the service has no intent-filter, so an action-only
+            // intent never resolves and commands silently vanish.
+            val controlIntent = Intent(this, PlaybackService::class.java).apply {
+                action = PlaybackService.ACTION_PLAYBACK_CONTROL
                 putExtra(PlaybackService.EXTRA_COMMAND, cmd)
-                setPackage(packageName)
             }
             startService(controlIntent)
         }

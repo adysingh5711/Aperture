@@ -11,7 +11,9 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -48,6 +50,16 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
 
         const val ACTION_PLAYBACK_CONTROL = "com.aperture.media.ACTION_CONTROL"
         const val EXTRA_COMMAND = "command"
+        const val EXTRA_SEEK_POSITION = "seek_position"
+    }
+
+    // Progress ticker so the seek bar tracks playback smoothly.
+    private val progressHandler = Handler(Looper.getMainLooper())
+    private val progressTicker = object : Runnable {
+        override fun run() {
+            if (player?.isPlaying == true) broadcastTrackChange()
+            progressHandler.postDelayed(this, 500)
+        }
     }
 
     override fun onCreate() {
@@ -57,6 +69,7 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification("Aperture gate active", "Initializing music..."))
 
+        progressHandler.postDelayed(progressTicker, 500)
         player = ExoPlayer.Builder(this).build()
         player?.repeatMode = Player.REPEAT_MODE_OFF
         player?.addListener(object : Player.Listener {
@@ -69,6 +82,14 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
                     // completion never fires onMediaItemTransition — advance manually here.
                     handleNext()
                 }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                // Fires when buffering actually turns into audible playback (and on
+                // pause/focus loss) — the broadcast sent right after play() is too
+                // early and always reports isPlaying=false.
+                broadcastTrackChange()
+                updateNotificationTrack()
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -91,6 +112,7 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
                 "forward" -> handleForward()
                 "shuffle" -> handleShuffleToggle()
                 "random" -> handleRandomTrack()
+                "seek_to" -> handleSeekTo(intent.getLongExtra(EXTRA_SEEK_POSITION, -1L))
             }
         } else {
             requestAudioFocusAndStart()
@@ -134,8 +156,8 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
         serviceScope.launch {
             val activeRepo = ActiveSessionRepository(applicationContext)
             val musicRepo = MusicLibraryRepository(applicationContext)
-            val session = activeRepo.read() ?: return@launch
-            sessionSeed = session.challengeSeed.toLongOrNull() ?: 0L
+            val session = activeRepo.read()
+            sessionSeed = session?.challengeSeed?.toLongOrNull() ?: SystemClock.elapsedRealtime()
 
             val library = musicRepo.read()
             val enabledMusic = library.music.filter { it.enabled }
@@ -148,10 +170,12 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
             queue = MusicQueueBuilder.buildQueue(enabledMusic, sessionSeed).toMutableList()
             currentIdx = 0
 
-            activeRepo.write(session.copy(
-                queueMediaIds = queue.map { it.id },
-                currentMediaIndex = currentIdx
-            ))
+            if (session != null) {
+                activeRepo.write(session.copy(
+                    queueMediaIds = queue.map { it.id },
+                    currentMediaIndex = currentIdx
+                ))
+            }
 
             playCurrentItem()
         }
@@ -254,6 +278,14 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
             return
         }
         handleNext()
+    }
+
+    private fun handleSeekTo(positionMs: Long) {
+        if (positionMs < 0) return
+        player?.let {
+            it.seekTo(positionMs.coerceIn(0L, if (it.duration > 0) it.duration else positionMs))
+            broadcastTrackChange()
+        }
     }
 
     private fun handleRewind() {
@@ -376,6 +408,7 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "PlaybackService: onDestroy")
+        progressHandler.removeCallbacks(progressTicker)
         serviceJob.cancel()
         player?.release()
         player = null
