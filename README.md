@@ -1,97 +1,94 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Aperture
 
-# Getting Started
+A commitment device for your phone. You pledge a block of focused time, Aperture waits, and when the moment comes it locks you into a full-screen **gate** that can only be dismissed by solving math challenges — or by waiting out the timer you committed to. No accounts, no network, no tracking: everything lives on your device.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+Built with React Native and native Kotlin/Swift modules, styled with inspiration from CRED's [NeoPOP design system](https://playground.cred.club) with full dark/light theming.
 
-## Step 1: Start Metro
+## How it works
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+1. **Commit** — pick a waiting duration and a gate duration on the Today screen and start the session.
+2. **Wait** — the waiting period runs in the background with exact alarms; you can cancel during this phase (that's the point — friction, not punishment).
+3. **Gate** — when the wait ends, a full-screen native activity takes over. Leaving requires solving a chain of arithmetic challenges (Light / Standard / Hard) on a NeoPOP keypad, or letting the committed time elapse.
+4. **Reflect** — completed sessions land in the Journal; the Patterns screen turns them into trends, histograms, and neutral insights once enough data exists.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Features
+
+- **Enforced sessions** — epoch-based timing survives reboots and process death; an accessibility "guardian" service and foreground services keep the gate in front.
+- **Gate music** — bring your own local audio (SAF picker, duplicate-safe), with shuffle, seek, and media-session playback via ExoPlayer/media3.
+- **Journal** — automatic session logging plus manual entries, with editable end times and JSON export.
+- **Patterns** — gate-minutes trend (7/30 days), start-time histogram, calendar heatmap, and summary stats.
+- **NeoPOP UI** — sharp corners, plunk-elevated buttons, hairline strokes, serif display numerals, wheel pickers with haptic-style tick sounds, and a background grid — in both dark and light mode, mirrored in the native gate through day/night resources.
+- **Private by design** — no network calls, no accounts, no analytics. `exportJournal` and `Share` are the only ways data leaves the app.
+
+## Getting started
+
+Prerequisites: a working [React Native environment](https://reactnative.dev/docs/set-up-your-environment) (Node ≥ 20, JDK 17, Android SDK; Xcode for iOS).
 
 ```sh
-# Using npm
-npm start
+git clone git@github.com:adysingh5711/Aperture.git
+cd Aperture
+npm install
 
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
+# Android
 npm run android
 
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+# iOS
+bundle install && bundle exec pod install --project-directory=ios
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Start Metro on its own with `npm start`; run checks with `npm run lint` and `npm test`.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+> **Note:** Android is the primary platform — enforcement (gate activity, guardian service, exact alarms) is fully native there. The iOS module implements session state, settings, and the music library, but OS restrictions make hard enforcement weaker.
 
-## Step 3: Modify your app
+### Android permissions
 
-Now that you have successfully run the app, let's make changes!
+Aperture asks for several sensitive permissions; all are used solely for enforcement and are optional-but-recommended (the Today screen shows what's missing and why):
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+| Permission | Why |
+|---|---|
+| Exact alarms | Fire the gate at the committed moment |
+| Accessibility service | Re-surface the gate if you navigate away |
+| Usage access | Detect foreground apps during a session |
+| Ignore battery optimizations | Keep timers alive on aggressive OEMs |
+| Display over other apps | Bring the gate back to the front |
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Project structure
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+```
+src/
+  components/    # NeoPOP primitives (buttons, cards, grid), alert host,
+                 # wheel pickers, charts, bottom sheets
+  navigation/    # Bottom tabs + stacks
+  screens/       # Today, Journal, Patterns, Settings, Gate (JS fallback)
+  native/        # Typed bridge to the native module (+ in-memory mock)
+  theme.ts       # NeoPOP tokens: palettes, spacing, radii, plunk depth
+android/
+  .../aperture/  # Kotlin: native module, GateActivity, PlaybackService,
+                 # guardian services, alarm receivers, repositories
+ios/Aperture/    # Swift native module
+```
 
-## Congratulations! :tada:
+Design tokens follow the NeoPOP primitives (popBlack/popWhite scales, `#06C270` green, 3px plunk). If you touch UI, keep corners sharp and strokes hairline — no rounded corners, no soft shadows.
 
-You've successfully run and modified your React Native App. :partying_face:
+## Contributing
 
-### Now what?
+Contributions are welcome — bug reports, fixes, and focused features.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+1. Fork the repo and create a branch from `main`.
+2. Make your change. Match the existing style: minimal diffs, root-cause fixes, and theme tokens instead of hardcoded colors.
+3. Verify before opening a PR:
+   ```sh
+   npx tsc --noEmit
+   npm run lint
+   cd android && ./gradlew :app:assembleDebug   # if you touched native code
+   ```
+4. Open a pull request describing **what** changed and **why**. Screenshots (dark **and** light) for UI changes are appreciated.
 
-# Troubleshooting
+Good first contributions: iOS enforcement parity, accessibility labels, translations, and additional Patterns insights. For anything large, open an issue first so we can agree on the approach.
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+Please keep the privacy contract intact: no PR that adds network calls, analytics, or third-party data collection will be merged.
 
-# Learn More
+## License
 
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+[MIT](LICENSE) © 2026 Aditya Singh
