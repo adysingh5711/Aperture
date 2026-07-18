@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { useFocusEffect, useRoute, RouteProp } from '@react-navigation/native';
-import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors, radii } from '../theme';
 import { SectionLabel } from '../components/neopop';
 import { DotsIcon } from '../components/icons';
 import ApertureModule from '../native/ApertureModule';
@@ -146,6 +146,8 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.surface,
       borderWidth: 1,
       borderColor: c.border,
+      borderRadius: radii.card,
+      overflow: 'hidden',
     },
     row: {
       flexDirection: 'row',
@@ -180,6 +182,7 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.surfaceAlt,
       borderWidth: 1,
       borderColor: c.border,
+      borderRadius: radii.chip,
       paddingVertical: spacing.sm,
       paddingHorizontal: spacing.md,
     },

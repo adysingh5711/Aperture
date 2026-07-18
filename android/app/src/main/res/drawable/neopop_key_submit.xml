@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- NeoPOP elevated CTA: white face on a darker plunk plate offset down-right;
+<!-- NeoPOP elevated CTA: face on a 3dp plunk plate offset down-right;
      pressing moves the face onto the plate (same motion as the JS NeoPopButton) -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
@@ -9,7 +9,7 @@
                     <solid android:color="@color/np_cta_edge" />
                 </shape>
             </item>
-            <item android:left="4dp" android:top="4dp">
+            <item android:left="3dp" android:top="3dp">
                 <shape android:shape="rectangle">
                     <solid android:color="@color/np_cta_face" />
                 </shape>
@@ -23,7 +23,7 @@
                     <solid android:color="@color/np_cta_edge" />
                 </shape>
             </item>
-            <item android:right="4dp" android:bottom="4dp">
+            <item android:right="3dp" android:bottom="3dp">
                 <shape android:shape="rectangle">
                     <solid android:color="@color/np_cta_face" />
                 </shape>

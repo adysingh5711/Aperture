@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
-import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, radii, useThemedStyles, ThemeColors } from '../theme';
 import { WheelDatePicker, WheelTimePicker } from './wheel';
 import { NeoPopButton } from './neopop';
 import ApertureModule from '../native/ApertureModule';
@@ -161,10 +161,9 @@ const makeStyles = (c: ThemeColors) =>
     },
     sheetContainer: {
       backgroundColor: c.surface,
-      borderRadius: 0,
-      paddingBottom: spacing.xl,
       borderTopWidth: 1,
       borderColor: c.border,
+      paddingBottom: spacing.xl,
     },
     header: {
       padding: spacing.md,
@@ -200,7 +199,7 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.surfaceAlt,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
-      borderRadius: 0,
+      borderRadius: radii.button,
       borderWidth: 1,
       borderColor: c.border,
     },
@@ -215,11 +214,10 @@ const makeStyles = (c: ThemeColors) =>
     errorContainer: {
       backgroundColor: c.surfaceAlt,
       padding: spacing.sm,
-      borderRadius: 0,
+      borderRadius: radii.chip,
       marginBottom: spacing.md,
       borderWidth: 1,
       borderColor: c.error,
-      borderLeftWidth: 4,
     },
     errorText: {
       color: c.error,

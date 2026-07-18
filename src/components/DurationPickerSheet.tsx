@@ -79,10 +79,9 @@ const makeStyles = (c: ThemeColors) =>
     },
     sheetContainer: {
       backgroundColor: c.surface,
-      borderRadius: 0,
-      paddingBottom: spacing.xl,
       borderTopWidth: 1,
       borderColor: c.border,
+      paddingBottom: spacing.xl,
     },
     header: {
       padding: spacing.md,

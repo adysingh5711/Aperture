@@ -236,7 +236,6 @@ const makeStyles = (c: ThemeColors) =>
     marginBottom: spacing.lg,
   },
   answerBox: {
-    borderRadius: 0,
     borderWidth: 1,
     borderColor: c.border,
     backgroundColor: c.surface,
@@ -261,13 +260,12 @@ const makeStyles = (c: ThemeColors) =>
     width: '28%',
     aspectRatio: 1,
     backgroundColor: c.surface,
-    borderRadius: 0,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: c.border,
   },
-  // ponytail: plunk edge faked with thick right/bottom borders instead of the plate+face pattern — good enough for a static keypad key
+  // ponytail: plunk edge faked with thick right/bottom borders — good enough for a static keypad key
   keySubmit: {
     backgroundColor: c.ctaFace,
     borderColor: c.ctaEdge,

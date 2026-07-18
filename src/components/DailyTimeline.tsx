@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, DimensionValue } from 'react-native';
-import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors, radii } from '../theme';
 import { SectionLabel } from './neopop';
 import { Session } from '../types';
 
@@ -92,6 +92,7 @@ const makeStyles = (c: ThemeColors) =>
       padding: spacing.md,
       borderWidth: 1,
       borderColor: c.border,
+      borderRadius: radii.card,
       marginTop: spacing.md,
     },
     barContainer: {

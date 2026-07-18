@@ -23,9 +23,10 @@ interface NeoPopButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// Elevated NeoPOP button: flat face sitting on a darker "plunk" plate offset
-// down-right; pressing sinks the face onto the plate.
-// ponytail: L-shaped plate instead of true mitered bevel faces. Ceiling: corner is square, not 45° — upgrade with skewX'd edge views if fidelity matters
+// NeoPOP plunk: face on a solid 3px plate offset down-right; pressing slides
+// the face onto it in 120ms ease-in-out (the playground's press transition).
+// ponytail: solid plate instead of 45°-skewed mitered edges — Android clips
+// transformed children unreliably and the skew tips bleed. Plate never glitches.
 export function NeoPopButton({
   title,
   onPress,
@@ -47,33 +48,32 @@ export function NeoPopButton({
   const elevated = variant !== 'flat';
   const translate = sink.interpolate({ inputRange: [0, 1], outputRange: [0, depth] });
 
-  // Fast press-in, springy release; both native-driven and interruptible.
-  const pressIn = () =>
-    Animated.timing(sink, { toValue: 1, duration: 70, useNativeDriver: true }).start();
-  const pressOut = () =>
-    Animated.spring(sink, { toValue: 0, speed: 30, bounciness: 5, useNativeDriver: true }).start();
+  // Spec: transition transform 0.12s ease-in-out, both directions.
+  const to = (v: number) =>
+    Animated.timing(sink, { toValue: v, duration: 120, useNativeDriver: true }).start();
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      onPressIn={() => elevated && pressIn()}
-      onPressOut={() => elevated && pressOut()}
+      onPressIn={() => elevated && to(1)}
+      onPressOut={() => elevated && to(0)}
       style={[{ opacity: disabled ? 0.4 : 1 }, style]}
     >
       {({ pressed }) => (
-        <View
-          style={
-            elevated
-              ? { backgroundColor: palette.edge, paddingRight: depth, paddingBottom: depth }
-              : null
-          }
-        >
+        // Flat gets the same transparent plate padding so every variant is
+        // exactly the same height when placed side by side (e.g. alert rows).
+        <View style={{ backgroundColor: palette.edge, paddingRight: depth, paddingBottom: depth }}>
           <Animated.View
             style={[
               styles.face,
               { backgroundColor: palette.face },
-              !elevated && { borderWidth: 1, borderColor: colors.border },
+              // -1 padding compensates the 1px border so faces line up.
+              !elevated && {
+                borderWidth: 1,
+                borderColor: colors.border,
+                paddingVertical: spacing.md - 1,
+              },
               !elevated && pressed && { backgroundColor: colors.surfaceAlt },
               elevated && { transform: [{ translateX: translate }, { translateY: translate }] },
             ]}
@@ -89,7 +89,7 @@ export function NeoPopButton({
   );
 }
 
-// Flat NeoPOP card: sharp corners, hard 1px border.
+// NeoPOP containerCard: flat surface, sharp corners, hairline stroke.
 export function NeoPopCard({
   children,
   style,

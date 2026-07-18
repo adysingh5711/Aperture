@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { alert } from '../components/alert';
 import { useFocusEffect } from '@react-navigation/native';
-import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors, radii } from '../theme';
 import { NeoPopButton, NeoPopCard, SectionLabel } from '../components/neopop';
 import ApertureModule from '../native/ApertureModule';
 import { MusicLibrary, MusicItem } from '../types';
@@ -169,6 +169,8 @@ const makeStyles = (c: ThemeColors) =>
       borderWidth: 1,
       borderColor: c.border,
       backgroundColor: c.surface,
+      borderRadius: radii.card,
+      overflow: 'hidden',
     },
     trackRow: {
       flexDirection: 'row',
@@ -200,6 +202,7 @@ const makeStyles = (c: ThemeColors) =>
       paddingVertical: spacing.xs,
       borderWidth: 1,
       borderColor: c.error,
+      borderRadius: radii.button,
     },
     deleteText: {
       color: c.error,

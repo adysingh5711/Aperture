@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, AppState } from '
 import { alert } from '../components/alert';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, radii, useTheme, useThemedStyles, ThemeColors } from '../theme';
 import { NeoPopButton, NeoPopCard, SectionLabel, GridBackground } from '../components/neopop';
 import ApertureModule from '../native/ApertureModule';
 import { ActiveSession, CommitmentLog, Session } from '../types';
@@ -423,15 +423,15 @@ const makeStyles = (c: ThemeColors) =>
     },
     dateText: {
       color: c.textPrimary,
-      fontSize: 26,
-      fontWeight: '900',
-      letterSpacing: -0.5,
+      fontSize: 28,
+      fontFamily: 'serif',
+      fontWeight: '700',
     },
     bannerAlert: {
       backgroundColor: c.surface,
       borderWidth: 1,
       borderColor: c.error,
-      borderLeftWidth: 4,
+      borderRadius: radii.chip,
       padding: spacing.md,
       marginTop: spacing.md,
       flexDirection: 'row',
@@ -449,6 +449,7 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.error,
       paddingHorizontal: spacing.sm,
       paddingVertical: 6,
+      borderRadius: radii.button,
     },
     bannerAlertBtnText: {
       color: '#FFFFFF',
@@ -459,14 +460,18 @@ const makeStyles = (c: ThemeColors) =>
     stateCard: {
       marginBottom: spacing.md,
     },
+    // Status tint needs its own width: light-mode cards are borderless.
     cardConfirm: {
+      borderWidth: 1,
       borderColor: c.textPrimary,
     },
     cardWaiting: {
+      borderWidth: 1,
       borderColor: c.accent,
       alignItems: 'center',
     },
     cardActive: {
+      borderWidth: 1,
       borderColor: c.error,
     },
     pickerRow: {

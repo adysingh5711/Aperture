@@ -2,8 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { Appearance, StyleSheet, Text, View, TouchableOpacity, ScrollView, Share } from 'react-native';
 import { alert } from '../components/alert';
 import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
-import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
-import { NeoPopButton, NeoPopCard, SectionLabel, GridBackground } from '../components/neopop';
+import { spacing, useTheme, useThemedStyles, ThemeColors, radii } from '../theme';
+import { NeoPopButton, SectionLabel } from '../components/neopop';
 import { ChevronRightIcon } from '../components/icons';
 import ApertureModule from '../native/ApertureModule';
 import { SettingsStackParamList, Diagnostics } from '../types';
@@ -77,11 +77,10 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.root}>
-      <GridBackground />
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl }}>
       {/* Appearance */}
       <SectionLabel style={styles.sectionTitle}>Appearance</SectionLabel>
-      <NeoPopCard style={styles.card}>
+      <View style={styles.card}>
         <View style={[styles.row, styles.rowLast, { paddingVertical: spacing.sm }]}>
           {THEME_MODES.map(mode => (
             <TouchableOpacity
@@ -96,11 +95,11 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           ))}
         </View>
-      </NeoPopCard>
+      </View>
 
       {/* Session defaults */}
       <SectionLabel style={styles.sectionTitle}>Session defaults</SectionLabel>
-      <NeoPopCard style={styles.card}>
+      <View style={styles.card}>
         <TouchableOpacity style={styles.row} onPress={() => setShowWaitPicker(true)}>
           <Text style={styles.rowLabel}>Waiting duration</Text>
           <Text style={styles.rowValue}>{waitMinutes} min</Text>
@@ -109,11 +108,11 @@ export default function SettingsScreen() {
           <Text style={styles.rowLabel}>Gate duration</Text>
           <Text style={styles.rowValue}>{gateMinutes} min</Text>
         </TouchableOpacity>
-      </NeoPopCard>
+      </View>
 
       {/* Challenge difficulty */}
       <SectionLabel style={styles.sectionTitle}>Challenge difficulty</SectionLabel>
-      <NeoPopCard style={styles.card}>
+      <View style={styles.card}>
         <View style={[styles.row, styles.rowLast, { paddingVertical: spacing.sm }]}>
           {DIFFICULTIES.map(d => (
             <TouchableOpacity
@@ -130,22 +129,22 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           ))}
         </View>
-      </NeoPopCard>
+      </View>
 
       {/* Gate Sound Library */}
       <SectionLabel style={styles.sectionTitle}>Gate sound library</SectionLabel>
       <TouchableOpacity onPress={() => navigation.navigate('SoundLibrary')}>
-        <NeoPopCard style={styles.card}>
+        <View style={styles.card}>
           <View style={[styles.row, styles.rowLast]}>
             <Text style={styles.rowLabel}>Manage local music</Text>
             <ChevronRightIcon size={16} color={colors.textMuted} />
           </View>
-        </NeoPopCard>
+        </View>
       </TouchableOpacity>
 
       {/* Data */}
       <SectionLabel style={styles.sectionTitle}>Data</SectionLabel>
-      <NeoPopCard style={styles.card}>
+      <View style={styles.card}>
         <NeoPopButton title="Export journal (JSON)" variant="flat" onPress={handleExport} />
         <NeoPopButton
           title="Clear all data"
@@ -153,20 +152,20 @@ export default function SettingsScreen() {
           style={{ marginTop: spacing.sm }}
           onPress={handleClearAll}
         />
-      </NeoPopCard>
+      </View>
 
       {/* Privacy */}
       <SectionLabel style={styles.sectionTitle}>Privacy</SectionLabel>
-      <NeoPopCard style={styles.card}>
+      <View style={styles.card}>
         <Text style={styles.bodyText}>
           All data stays on this device. Aperture makes no network calls, has no account, and no
           cloud sync.
         </Text>
-      </NeoPopCard>
+      </View>
 
       {/* Diagnostics */}
       <SectionLabel style={styles.sectionTitle}>Diagnostics</SectionLabel>
-      <NeoPopCard style={styles.card}>
+      <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Version</Text>
           <Text style={styles.rowValue}>{diagnostics?.version ?? '—'}</Text>
@@ -183,7 +182,7 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </View>
-      </NeoPopCard>
+      </View>
 
       <DurationPickerSheet
         visible={showWaitPicker}
@@ -233,7 +232,7 @@ const makeStyles = (c: ThemeColors) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingVertical: spacing.sm + 2,
+      paddingVertical: spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: c.border,
     },
@@ -247,8 +246,8 @@ const makeStyles = (c: ThemeColors) =>
     },
     rowValue: {
       color: c.textSecondary,
-      fontSize: 12,
-      fontWeight: '600',
+      fontSize: 13,
+      fontWeight: '700',
     },
     bodyText: {
       color: c.textSecondary,
@@ -263,6 +262,7 @@ const makeStyles = (c: ThemeColors) =>
       marginHorizontal: 2,
       borderWidth: 1,
       borderColor: c.border,
+      borderRadius: radii.button,
     },
     difficultyPillActive: {
       backgroundColor: c.accent,
@@ -281,6 +281,7 @@ const makeStyles = (c: ThemeColors) =>
       borderWidth: 1,
       paddingHorizontal: spacing.sm,
       paddingVertical: 3,
+      borderRadius: radii.button,
     },
     badgeOn: {
       borderColor: c.accent,

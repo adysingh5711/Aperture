@@ -90,15 +90,16 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'flex-end',
       marginBottom: 4,
     },
+    // CRED bar charts: muted bars, one accent highlight (peak).
     barFill: {
       width: '100%',
-      backgroundColor: c.accent,
+      backgroundColor: c.textMuted,
     },
     barFillEmpty: {
       backgroundColor: c.heatNone,
     },
     barFillPeak: {
-      backgroundColor: c.textPrimary,
+      backgroundColor: c.accent,
     },
     barLabel: {
       color: c.textSecondary,

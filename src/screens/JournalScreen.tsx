@@ -133,9 +133,9 @@ const makeStyles = (c: ThemeColors) =>
     },
     title: {
       color: c.textPrimary,
-      fontSize: 26,
-      fontWeight: '900',
-      letterSpacing: -0.5,
+      fontSize: 28,
+      fontFamily: 'serif',
+      fontWeight: '700',
     },
     summaryCard: {
       marginTop: spacing.md,

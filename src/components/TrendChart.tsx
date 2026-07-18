@@ -140,12 +140,13 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: 'flex-end',
       marginBottom: 4,
     },
+    // CRED bar charts: muted bars, one accent highlight (today).
     barFill: {
       width: '100%',
-      backgroundColor: c.accent,
+      backgroundColor: c.textMuted,
     },
     barFillToday: {
-      backgroundColor: c.textPrimary,
+      backgroundColor: c.accent,
     },
     barLabel: {
       color: c.textSecondary,

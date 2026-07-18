@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { spacing, useTheme, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, useTheme, useThemedStyles, ThemeColors, radii } from '../theme';
 import { ArrowLeftIcon, ArrowRightIcon } from './icons';
 import { CommitmentLog } from '../types';
 import { formatDateMonthYear, getISODateKey } from '../utils/formatters';
@@ -181,6 +181,7 @@ const makeStyles = (c: ThemeColors) =>
       padding: spacing.md,
       borderWidth: 1,
       borderColor: c.border,
+      borderRadius: radii.card,
     },
     header: {
       flexDirection: 'row',

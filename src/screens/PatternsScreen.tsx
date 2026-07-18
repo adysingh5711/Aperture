@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { spacing, useThemedStyles, ThemeColors } from '../theme';
+import { spacing, useThemedStyles, ThemeColors, radii } from '../theme';
 import { SectionLabel, GridBackground } from '../components/neopop';
 import ApertureModule from '../native/ApertureModule';
 import { CommitmentLog, Session } from '../types';
@@ -114,9 +114,9 @@ const makeStyles = (c: ThemeColors) =>
     },
     title: {
       color: c.textPrimary,
-      fontSize: 26,
-      fontWeight: '900',
-      letterSpacing: -0.5,
+      fontSize: 28,
+      fontFamily: 'serif',
+      fontWeight: '700',
     },
     placeholderContainer: {
       flex: 1,
@@ -140,13 +140,16 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.surface,
       borderWidth: 1,
       borderColor: c.border,
+      borderRadius: radii.card,
       padding: spacing.md,
       alignItems: 'center',
     },
+    // Serif display numerals, like CRED's big stats.
     statVal: {
       color: c.textPrimary,
-      fontSize: 20,
-      fontWeight: '900',
+      fontSize: 22,
+      fontFamily: 'serif',
+      fontWeight: '700',
     },
     statLabel: {
       color: c.textSecondary,
