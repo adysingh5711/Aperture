@@ -70,7 +70,7 @@
         android:foregroundServiceType="specialUse"
         android:exported="false">
         <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                  android:resource="@string/fgs_special_use_description" />
+                  android:value="Focus gate commitment enforcement" />
       </service>
 
     </application>
