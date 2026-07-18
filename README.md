@@ -29,6 +29,9 @@ git clone git@github.com:adysingh5711/Aperture.git
 cd Aperture
 npm install
 
+# Metro bundler (leave running in its own terminal)
+npm start
+
 # Android
 npm run android
 
@@ -37,7 +40,32 @@ bundle install && bundle exec pod install --project-directory=ios
 npm run ios
 ```
 
-Start Metro on its own with `npm start`; run checks with `npm run lint` and `npm test`.
+Run checks with `npm run lint` and `npm test`.
+
+### Building and releasing APKs
+
+**Local build (debug APK):**
+```sh
+cd android
+./gradlew assembleDebug
+# Output: android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+**Release APK:**
+```sh
+cd android
+./gradlew assembleRelease
+# Output: android/app/build/outputs/apk/release/app-release.apk
+```
+
+**Automated GitHub releases:**
+Push a tag to trigger APK builds and upload to GitHub Releases:
+```sh
+git tag v0.0.1
+git push origin v0.0.1
+```
+
+The version is automatically pulled from `package.json` → update `"version"` there before tagging.
 
 > **Note:** Android is the primary platform — enforcement (gate activity, guardian service, exact alarms) is fully native there. The iOS module implements session state, settings, and the music library, but OS restrictions make hard enforcement weaker.
 
