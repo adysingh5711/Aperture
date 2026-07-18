@@ -2,14 +2,49 @@ name: Build Release APK
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+    paths:
+      - 'package.json'
+  release:
+    types: [published]
 
 permissions:
   contents: write
 
 jobs:
+  tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.check.outputs.tag }}
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine tag
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            TAG="v$VERSION"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+              echo "Tag $TAG already exists, skipping."
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+            else
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git tag "$TAG"
+              git push origin "$TAG"
+              echo "should_release=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   build:
+    needs: tag
+    if: needs.tag.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,9 +70,25 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Upload to Release
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk "android/app/build/outputs/apk/release/Aperture-${{ needs.tag.outputs.tag }}.apk"
+
+      # Automated flow (package.json bump on main): sets the tag/title too, since the tag was just created.
+      - name: Attach APK (automated release)
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v1
         with:
-          files: android/app/build/outputs/apk/release/app-release.apk
+          tag_name: ${{ needs.tag.outputs.tag }}
+          name: ${{ needs.tag.outputs.tag }}
+          files: android/app/build/outputs/apk/release/Aperture-${{ needs.tag.outputs.tag }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Manual flow ("Draft a new release" in the GitHub UI): release + title already exist, just attach the APK.
+      - name: Attach APK (manual release)
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: android/app/build/outputs/apk/release/Aperture-${{ needs.tag.outputs.tag }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
