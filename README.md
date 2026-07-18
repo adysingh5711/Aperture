@@ -1,5 +1,10 @@
 # Aperture
 
+[![Build Release APK](https://github.com/adysingh5711/Aperture/actions/workflows/release.yml/badge.svg)](https://github.com/adysingh5711/Aperture/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/adysingh5711/Aperture)](https://github.com/adysingh5711/Aperture/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![React Native](https://img.shields.io/badge/React%20Native-0.86.0-61DAFB?logo=react)](package.json)
+
 A commitment device for your phone. You pledge a block of focused time, Aperture waits, and when the moment comes it locks you into a full-screen **gate** that can only be dismissed by solving math challenges — or by waiting out the timer you committed to. No accounts, no network, no tracking: everything lives on your device.
 
 Built with React Native and native Kotlin/Swift modules, styled with inspiration from CRED's [NeoPOP design system](https://playground.cred.club) with full dark/light theming.
