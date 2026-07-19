@@ -427,14 +427,15 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
     let items = lib["music"] as? [[String: Any]] ?? []
     let enabledItems = items.filter { ($0["enabled"] as? Bool) ?? true }
 
-    if enabledItems.isEmpty { return }
-
     let playerItems = enabledItems.compactMap { item -> AVPlayerItem? in
       guard let uriStr = item["uri"] as? String, let url = URL(string: uriStr) else { return nil }
       return AVPlayerItem(url: url)
     }
 
-    if playerItems.isEmpty { return }
+    if playerItems.isEmpty {
+      playFallbackTone()
+      return
+    }
 
     do {
       try audioSession.setCategory(.playback, mode: .default, options: [])
@@ -447,8 +448,27 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
     player?.play()
   }
 
+  // Bird chirping loop played during the Gate when no music is selected, mirroring Android's playFallbackDrone
+  private func playFallbackTone() {
+    guard let url = Bundle.main.url(forResource: "fallback_tone", withExtension: "mp3") else { return }
+
+    do {
+      try audioSession.setCategory(.playback, mode: .default, options: [])
+      try audioSession.setActive(true)
+    } catch {
+      print("Failed to set audio session category")
+    }
+
+    let queuePlayer = AVQueuePlayer()
+    let item = AVPlayerItem(url: url)
+    playerLooper = AVPlayerLooper(player: queuePlayer, templateItem: item)
+    player = queuePlayer
+    player?.play()
+  }
+
   private func stopPlayback() {
     player?.pause()
+    playerLooper = nil
     player = nil
     try? audioSession.setActive(false)
   }

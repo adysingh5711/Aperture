@@ -212,10 +212,10 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
             player.repeatMode = Player.REPEAT_MODE_ONE
             player.prepare()
             player.play()
-            updateNotification("Aperture gate active", "Playing default tone loop")
+            updateNotification("Aperture gate active", "Playing calming bird sounds")
 
             val intent = Intent("com.aperture.media.TRACK_CHANGE").apply {
-                putExtra("title", "Default Tone Loop")
+                putExtra("title", "Bird Chirping")
                 putExtra("isPlaying", true)
                 setPackage(packageName)
             }

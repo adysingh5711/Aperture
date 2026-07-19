@@ -1,3 +1,5 @@
+require 'json'
+
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -30,5 +32,13 @@ target 'Aperture' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Keep MARKETING_VERSION in sync with package.json, mirroring android/app/build.gradle
+    version = JSON.parse(File.read(File.join(__dir__, '..', 'package.json')))['version']
+    project = Xcodeproj::Project.open(File.join(__dir__, 'Aperture.xcodeproj'))
+    project.targets.each do |target|
+      target.build_configurations.each { |c| c.build_settings['MARKETING_VERSION'] = version }
+    end
+    project.save
   end
 end

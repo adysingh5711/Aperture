@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0C80B921A6F3F58F76C31292 /* libPods-Aperture.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-Aperture.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		26B16BB83D61CDDFA0498621 /* fallback_tone.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C81CE9A245ADAA7D41FF3790 /* fallback_tone.mp3 */; };
 		384FB428E58877B6C1426724 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		4836545C3006570D00FDC9B4 /* ApertureNativeModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4836545B3006570D00FDC9B4 /* ApertureNativeModule.swift */; };
 		4836545E3006571E00FDC9B4 /* ApertureNativeModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 4836545D3006571E00FDC9B4 /* ApertureNativeModule.m */; };
@@ -29,6 +30,7 @@
 		5DCACB8F33CDC322A6C60F78 /* libPods-Aperture.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Aperture.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Aperture/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Aperture/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C81CE9A245ADAA7D41FF3790 /* fallback_tone.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; path = fallback_tone.mp3; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -55,6 +57,7 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				4836545F3006572800FDC9B4 /* Aperture-Bridging-Header.h */,
+				C81CE9A245ADAA7D41FF3790 /* fallback_tone.mp3 */,
 			);
 			name = Aperture;
 			sourceTree = "<group>";
@@ -170,6 +173,7 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				384FB428E58877B6C1426724 /* PrivacyInfo.xcprivacy in Resources */,
+				26B16BB83D61CDDFA0498621 /* fallback_tone.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,7 +282,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -308,7 +312,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

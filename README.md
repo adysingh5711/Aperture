@@ -64,13 +64,7 @@ cd android
 ```
 
 **Automated GitHub releases:**
-Push a tag to trigger APK builds and upload to GitHub Releases:
-```sh
-git tag v0.0.1
-git push origin v0.0.1
-```
-
-The version is automatically pulled from `package.json` → update `"version"` there before tagging.
+Bump `"version"` in `package.json` and push to `main` — CI detects the version change, tags the commit (`vX.Y.Z`), builds the APK, and publishes it as a GitHub Release named `Aperture-X.Y.Z`. No manual tagging required.
 
 > **Note:** Android is the primary platform — enforcement (gate activity, guardian service, exact alarms) is fully native there. The iOS module implements session state, settings, and the music library, but OS restrictions make hard enforcement weaker.
 
