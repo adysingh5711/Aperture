@@ -14,4 +14,6 @@
     <color name="np_cta_face">#0D0D0D</color>
     <color name="np_cta_edge">#3D3D3D</color>
     <color name="np_on_cta">#FFFFFF</color>
+
+    <color name="ic_launcher_background">#000000</color>
 </resources>
