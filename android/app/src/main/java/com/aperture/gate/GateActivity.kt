@@ -52,6 +52,7 @@ class GateActivity : AppCompatActivity() {
     private lateinit var etAnswer: EditText
     private lateinit var tvTrackTitle: TextView
     private lateinit var btnPlayPause: ImageButton
+    private lateinit var btnRepeat: ImageButton
     private lateinit var seekBar: SeekBar
     private lateinit var tvSeekPosition: TextView
     private lateinit var tvSeekDuration: TextView
@@ -61,6 +62,7 @@ class GateActivity : AppCompatActivity() {
     private var challengeEngine: ChallengeEngine? = null
     private var settingsDifficulty = "standard"
     private var shuffleKeypadSetting = false
+    private var autoplayOnGateStart = true
 
     private var countdownTimer: CountDownTimer? = null
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -85,8 +87,10 @@ class GateActivity : AppCompatActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             val title = intent.getStringExtra("title") ?: "No Track Playing"
             val isPlaying = intent.getBooleanExtra("isPlaying", false)
+            val repeatOne = intent.getBooleanExtra("repeatOne", false)
             tvTrackTitle.text = title
             btnPlayPause.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            btnRepeat.setImageResource(if (repeatOne) R.drawable.ic_repeat_one else R.drawable.ic_repeat)
             updateSeekUi(intent.getLongExtra("position", 0L), intent.getLongExtra("duration", 0L))
         }
     }
@@ -149,6 +153,7 @@ class GateActivity : AppCompatActivity() {
             val settings = settingsRepo.read()
             settingsDifficulty = settings.difficulty
             shuffleKeypadSetting = settings.shuffleKeypad
+            autoplayOnGateStart = settings.autoplayOnGateStart
         }
 
         val session = activeSession
@@ -188,8 +193,10 @@ class GateActivity : AppCompatActivity() {
         // 8. Setup Media Controls
         setupMediaControls()
 
-        // 9. Start PlaybackService
-        startPlaybackService()
+        // 9. Start PlaybackService (unless the user disabled autoplay in the sound library)
+        if (autoplayOnGateStart) {
+            startPlaybackService()
+        }
 
         // 10. Display current step
         displayCurrentStep()
@@ -542,13 +549,15 @@ class GateActivity : AppCompatActivity() {
             startService(controlIntent)
         }
 
+        btnRepeat = findViewById(R.id.btn_media_repeat)
+
         findViewById<View>(R.id.btn_media_shuffle).setOnClickListener { sendCommand("shuffle") }
         findViewById<View>(R.id.btn_media_rewind).setOnClickListener { sendCommand("rewind") }
         findViewById<View>(R.id.btn_media_prev).setOnClickListener { sendCommand("prev") }
         btnPlayPause.setOnClickListener { sendCommand("play_pause") }
         findViewById<View>(R.id.btn_media_next).setOnClickListener { sendCommand("next") }
         findViewById<View>(R.id.btn_media_forward).setOnClickListener { sendCommand("forward") }
-        findViewById<View>(R.id.btn_media_random).setOnClickListener { sendCommand("random") }
+        btnRepeat.setOnClickListener { sendCommand("repeat_toggle") }
     }
 
     private fun startPlaybackService() {

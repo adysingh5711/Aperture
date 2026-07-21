@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Appearance, StyleSheet, Text, View, TouchableOpacity, ScrollView, Share } from 'react-native';
+import { Appearance, Linking, StyleSheet, Text, View, TouchableOpacity, ScrollView, Share } from 'react-native';
 import { alert } from '../components/alert';
 import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import { spacing, useTheme, useThemedStyles, ThemeColors, radii } from '../theme';
@@ -155,12 +155,40 @@ export default function SettingsScreen() {
       </View>
 
       {/* Privacy */}
-      <SectionLabel style={styles.sectionTitle}>Privacy</SectionLabel>
+      <SectionLabel style={styles.sectionTitle}>Privacy policy</SectionLabel>
       <View style={styles.card}>
         <Text style={styles.bodyText}>
-          All data stays on this device. Aperture makes no network calls, has no account, and no
-          cloud sync.
+          Aperture makes no network calls, has no account or login, and does not use analytics,
+          crash reporting, or third-party SDKs. Nothing you do in this app is ever transmitted
+          anywhere.{'\n\n'}
+          Your commitment history, active session state, app settings, and any music files you add
+          are stored only in this app's private storage on this device. Uninstalling the app or
+          using "Clear all data" in this screen permanently deletes all of it.{'\n\n'}
+          Aperture requests the Exact Alarm, Accessibility, Usage Access, Overlay, and Battery
+          Optimization permissions solely to reliably start and enforce the gate timer on this
+          device — none of them are used to collect or share data.{'\n\n'}
+          Since everything stays on-device, there is no server-side data to request or delete. Use
+          "Export journal" to get a copy of your own data, or "Clear all data" to remove it.
         </Text>
+      </View>
+
+      {/* About */}
+      <SectionLabel style={styles.sectionTitle}>About</SectionLabel>
+      <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => Linking.openURL('https://github.com/adysingh5711/Aperture')}
+        >
+          <Text style={styles.rowLabel}>Source (GitHub)</Text>
+          <ChevronRightIcon size={16} color={colors.textMuted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.row, styles.rowLast]}
+          onPress={() => Linking.openURL('https://github.com/adysingh5711')}
+        >
+          <Text style={styles.rowLabel}>Contact me</Text>
+          <ChevronRightIcon size={16} color={colors.textMuted} />
+        </TouchableOpacity>
       </View>
 
       {/* Diagnostics */}

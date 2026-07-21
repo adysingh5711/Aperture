@@ -18,6 +18,8 @@ export default function SoundLibraryScreen() {
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [library, setLibrary] = useState<MusicLibrary | null>(null);
+  const [autoplayOnGateStart, setAutoplayOnGateStart] = useState(true);
+  const [defaultToneEnabled, setDefaultToneEnabled] = useState(true);
 
   const switchProps = {
     trackColor: { false: colors.border, true: colors.accent },
@@ -28,6 +30,9 @@ export default function SoundLibraryScreen() {
     try {
       const json = await ApertureModule.getMusicLibrary();
       setLibrary(JSON.parse(json) as MusicLibrary);
+      const settings = await ApertureModule.getSettings();
+      setAutoplayOnGateStart(settings.autoplayOnGateStart ?? true);
+      setDefaultToneEnabled(settings.defaultToneEnabled ?? true);
     } catch (e) {
       console.error('Failed to load music library', e);
     }
@@ -55,6 +60,18 @@ export default function SoundLibraryScreen() {
     const nextShuffle = !library.shuffleEnabled;
     setLibrary({ ...library, shuffleEnabled: nextShuffle });
     await persistLibraryState(music, nextShuffle);
+  };
+
+  const toggleAutoplay = async () => {
+    const next = !autoplayOnGateStart;
+    setAutoplayOnGateStart(next);
+    await ApertureModule.updateSettings({ autoplayOnGateStart: next });
+  };
+
+  const toggleDefaultTone = async () => {
+    const next = !defaultToneEnabled;
+    setDefaultToneEnabled(next);
+    await ApertureModule.updateSettings({ defaultToneEnabled: next });
   };
 
   const handleAdd = async () => {
@@ -89,6 +106,14 @@ export default function SoundLibraryScreen() {
       <SectionLabel style={styles.sectionTitle}>Playback</SectionLabel>
       <NeoPopCard>
         <View style={styles.shuffleRow}>
+          <Text style={styles.rowLabel}>Autoplay when gate starts</Text>
+          <Switch
+            value={autoplayOnGateStart}
+            onValueChange={toggleAutoplay}
+            {...switchProps}
+          />
+        </View>
+        <View style={[styles.shuffleRow, { marginTop: spacing.sm }]}>
           <Text style={styles.rowLabel}>Shuffle queue</Text>
           <Switch
             value={library?.shuffleEnabled ?? true}
@@ -105,35 +130,40 @@ export default function SoundLibraryScreen() {
         onPress={handleAdd}
       />
 
-      {music.length === 0 ? (
-        <Text style={styles.emptyText}>No music added. Gate will use a default tone.</Text>
-      ) : (
-        <>
-          <SectionLabel style={styles.sectionTitle}>Tracks</SectionLabel>
-          <View style={styles.list}>
-            {music.map((item, i) => (
-              <View key={item.id} style={[styles.trackRow, i === music.length - 1 && styles.trackRowLast]}>
-                <View style={styles.trackInfo}>
-                  <Text style={styles.trackName} numberOfLines={1}>{item.displayName}</Text>
-                  <Text style={styles.trackMeta}>{formatTrackDuration(item.durationMs)}</Text>
-                </View>
-                <Switch
-                  value={item.enabled}
-                  onValueChange={() => toggleEnabled(item.id)}
-                  {...switchProps}
-                />
-                <TouchableOpacity
-                  accessibilityLabel={`Remove ${item.displayName}`}
-                  style={styles.deleteBtn}
-                  onPress={() => handleRemove(item)}
-                >
-                  <Text style={styles.deleteText}>REMOVE</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+      <SectionLabel style={styles.sectionTitle}>Tracks</SectionLabel>
+      <View style={styles.list}>
+        <View style={[styles.trackRow, music.length === 0 && styles.trackRowLast]}>
+          <View style={styles.trackInfo}>
+            <Text style={styles.trackName} numberOfLines={1}>Default tone (bird chirping)</Text>
+            <Text style={styles.trackMeta}>Plays when no other track is enabled</Text>
           </View>
-        </>
-      )}
+          <Switch
+            value={defaultToneEnabled}
+            onValueChange={toggleDefaultTone}
+            {...switchProps}
+          />
+        </View>
+        {music.map((item, i) => (
+          <View key={item.id} style={[styles.trackRow, i === music.length - 1 && styles.trackRowLast]}>
+            <View style={styles.trackInfo}>
+              <Text style={styles.trackName} numberOfLines={1}>{item.displayName}</Text>
+              <Text style={styles.trackMeta}>{formatTrackDuration(item.durationMs)}</Text>
+            </View>
+            <Switch
+              value={item.enabled}
+              onValueChange={() => toggleEnabled(item.id)}
+              {...switchProps}
+            />
+            <TouchableOpacity
+              accessibilityLabel={`Remove ${item.displayName}`}
+              style={styles.deleteBtn}
+              onPress={() => handleRemove(item)}
+            >
+              <Text style={styles.deleteText}>REMOVE</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -158,12 +188,6 @@ const makeStyles = (c: ThemeColors) =>
       color: c.textPrimary,
       fontSize: 15,
       fontWeight: '600',
-    },
-    emptyText: {
-      color: c.textSecondary,
-      fontSize: 12,
-      textAlign: 'center',
-      marginTop: spacing.xl,
     },
     list: {
       borderWidth: 1,

@@ -60,7 +60,9 @@ data class Settings(
     val shuffleKeypad: Boolean = false,
     val defaultWaitingDurationMinutes: Int = 10,
     val defaultGateDurationMinutes: Int = 15,
-    val themeMode: String = "system" // "light" | "dark" | "system"
+    val themeMode: String = "system", // "light" | "dark" | "system"
+    val defaultToneEnabled: Boolean = true,
+    val autoplayOnGateStart: Boolean = true
 )
 
 

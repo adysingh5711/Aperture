@@ -36,12 +36,14 @@ class StartGateReceiver : BroadcastReceiver() {
             val now = SystemClock.elapsedRealtime()
             if (now >= session.endAtElapsedMs) {
                 Log.w(TAG, "Gate start arrived after end deadline. Finalizing timeout.")
+                AlarmController.cancelCountdownNotification(context)
                 SessionFinalizer.finalize(context, session, OffsetDateTime.now().toString(), "system_timeout")
                 return@runBlocking
             }
 
             // Move state to active
             repo.write(session.copy(status = "gate_active"))
+            AlarmController.cancelCountdownNotification(context)
 
             // Launch GateActivity aggressively
             val gateIntent = Intent(context, GateActivity::class.java).apply {

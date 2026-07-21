@@ -583,6 +583,12 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                 if (input.hasKey("themeMode")) {
                     updated = updated.copy(themeMode = input.getString("themeMode") ?: "system")
                 }
+                if (input.hasKey("defaultToneEnabled")) {
+                    updated = updated.copy(defaultToneEnabled = input.getBoolean("defaultToneEnabled"))
+                }
+                if (input.hasKey("autoplayOnGateStart")) {
+                    updated = updated.copy(autoplayOnGateStart = input.getBoolean("autoplayOnGateStart"))
+                }
 
                 settingsRepo.write(updated)
                 promise.resolve(null)
@@ -603,6 +609,8 @@ class ApertureNativeModule(reactContext: ReactApplicationContext) : ReactContext
                     putInt("defaultWaitingDurationMinutes", settings.defaultWaitingDurationMinutes)
                     putInt("defaultGateDurationMinutes", settings.defaultGateDurationMinutes)
                     putString("themeMode", settings.themeMode)
+                    putBoolean("defaultToneEnabled", settings.defaultToneEnabled)
+                    putBoolean("autoplayOnGateStart", settings.autoplayOnGateStart)
                 }
                 promise.resolve(map)
             } catch (e: Exception) {

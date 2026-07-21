@@ -133,7 +133,9 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
       if (session["status"] as? String == "waiting_for_gate") && (nowElapsed >= (session["gateAtElapsedMs"] as? Int64 ?? 0)) {
         session["status"] = "gate_active"
         saveActiveSession(session)
-        startPlayback()
+        if (readSettings()["autoplayOnGateStart"] as? Bool) ?? true {
+          startPlayback()
+        }
         DispatchQueue.main.async {
           UIApplication.shared.isIdleTimerDisabled = true
         }
@@ -365,6 +367,8 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
     if let wait = input["defaultWaitingDurationMinutes"] as? Int { settings["defaultWaitingDurationMinutes"] = wait }
     if let gate = input["defaultGateDurationMinutes"] as? Int { settings["defaultGateDurationMinutes"] = gate }
     if let mode = input["themeMode"] as? String { settings["themeMode"] = mode }
+    if let toneEnabled = input["defaultToneEnabled"] as? Bool { settings["defaultToneEnabled"] = toneEnabled }
+    if let autoplay = input["autoplayOnGateStart"] as? Bool { settings["autoplayOnGateStart"] = autoplay }
     saveSettings(settings)
     resolve(nil)
   }
@@ -413,7 +417,9 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
       DispatchQueue.main.async {
         UIApplication.shared.isIdleTimerDisabled = true
       }
-      startPlayback()
+      if (readSettings()["autoplayOnGateStart"] as? Bool) ?? true {
+        startPlayback()
+      }
       resolve(true)
     } else {
       resolve(false)
@@ -433,7 +439,9 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
     }
 
     if playerItems.isEmpty {
-      playFallbackTone()
+      if (readSettings()["defaultToneEnabled"] as? Bool) ?? true {
+        playFallbackTone()
+      }
       return
     }
 
@@ -618,7 +626,7 @@ class ApertureNativeModule: NSObject, RCTBridgeModule, UIDocumentPickerDelegate,
        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
       return json
     }
-    return ["difficulty": "standard", "shuffleKeypad": false, "defaultWaitingDurationMinutes": 10, "defaultGateDurationMinutes": 15, "themeMode": "system"]
+    return ["difficulty": "standard", "shuffleKeypad": false, "defaultWaitingDurationMinutes": 10, "defaultGateDurationMinutes": 15, "themeMode": "system", "defaultToneEnabled": true, "autoplayOnGateStart": true]
   }
 
   private func saveSettings(_ settings: [String: Any]) {

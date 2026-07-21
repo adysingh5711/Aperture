@@ -1,6 +1,11 @@
 package com.aperture
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -12,6 +17,15 @@ class MainActivity : ReactActivity() {
     // Aggressively prevent fragment restoration crashes
     val nullBundle: Bundle? = null
     super.onCreate(nullBundle)
+
+    // Android 13+ requires this to be explicitly requested at runtime; without it every
+    // notify() call (gate countdown, guardian, playback) silently no-ops.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+    ) {
+      ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9001)
+    }
   }
 
   /**

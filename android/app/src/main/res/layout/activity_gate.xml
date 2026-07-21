@@ -328,15 +328,15 @@
                         android:contentDescription="Forward 15 seconds"
                         android:background="?attr/selectableItemBackgroundBorderless"/>
 
-                    <!-- Random Distinct Track -->
+                    <!-- Repeat mode: sequence (default) vs loop current track -->
                     <ImageButton
-                        android:id="@+id/btn_media_random"
+                        android:id="@+id/btn_media_repeat"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:src="@drawable/ic_dice"
+                        android:src="@drawable/ic_repeat"
                         app:tint="@color/np_text_secondary"
                         android:scaleType="centerInside"
-                        android:contentDescription="Random track"
+                        android:contentDescription="Toggle repeat"
                         android:background="?attr/selectableItemBackgroundBorderless"/>
 
                 </LinearLayout>

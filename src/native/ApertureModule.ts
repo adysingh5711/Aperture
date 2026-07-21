@@ -48,6 +48,8 @@ export interface ApertureModuleType {
     defaultWaitingDurationMinutes?: number;
     defaultGateDurationMinutes?: number;
     themeMode?: 'light' | 'dark' | 'system';
+    defaultToneEnabled?: boolean;
+    autoplayOnGateStart?: boolean;
   }): Promise<void>;
   getSettings(): Promise<{
     difficulty: string;
@@ -55,6 +57,8 @@ export interface ApertureModuleType {
     defaultWaitingDurationMinutes: number;
     defaultGateDurationMinutes: number;
     themeMode?: 'light' | 'dark' | 'system'; // absent on settings files written before this key existed
+    defaultToneEnabled?: boolean; // absent on settings files written before this key existed; defaults true
+    autoplayOnGateStart?: boolean; // absent on settings files written before this key existed; defaults true
   }>;
   exportJournal(): Promise<string>;
   clearAllData(): Promise<void>;
@@ -83,6 +87,8 @@ let _mockSettings: any = {
   defaultWaitingDurationMinutes: 10,
   defaultGateDurationMinutes: 15,
   themeMode: 'system',
+  defaultToneEnabled: true,
+  autoplayOnGateStart: true,
 };
 
 const ApertureModuleFallback: ApertureModuleType = {

@@ -36,7 +36,9 @@ class SettingsRepository(private val context: Context) {
                 shuffleKeypad = root.optBoolean("shuffleKeypad", false),
                 defaultWaitingDurationMinutes = root.optInt("defaultWaitingDurationMinutes", 10),
                 defaultGateDurationMinutes = root.optInt("defaultGateDurationMinutes", 15),
-                themeMode = root.optString("themeMode", "system")
+                themeMode = root.optString("themeMode", "system"),
+                defaultToneEnabled = root.optBoolean("defaultToneEnabled", true),
+                autoplayOnGateStart = root.optBoolean("autoplayOnGateStart", true)
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to read settings.json", e)
@@ -58,6 +60,8 @@ class SettingsRepository(private val context: Context) {
             root.put("defaultWaitingDurationMinutes", settings.defaultWaitingDurationMinutes)
             root.put("defaultGateDurationMinutes", settings.defaultGateDurationMinutes)
             root.put("themeMode", settings.themeMode)
+            root.put("defaultToneEnabled", settings.defaultToneEnabled)
+            root.put("autoplayOnGateStart", settings.autoplayOnGateStart)
 
             val jsonStr = root.toString()
             val bytes = jsonStr.toByteArray(Charsets.UTF_8)

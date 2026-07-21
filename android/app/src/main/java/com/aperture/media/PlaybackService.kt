@@ -24,11 +24,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.aperture.data.ActiveSessionRepository
 import com.aperture.data.MusicItem
 import com.aperture.data.MusicLibraryRepository
+import com.aperture.data.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.util.Random
 
 class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
     private var player: ExoPlayer? = null
@@ -42,6 +42,9 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
     private var currentIdx = 0
     private var sessionSeed = 0L
     private var consecutiveFailures = 0
+    // ponytail: resets to sequence every gate rather than persisting across sessions/restarts
+    private var repeatCurrentTrack = false
+    private var defaultToneEnabled = true
 
     companion object {
         private const val TAG = "PlaybackService"
@@ -111,7 +114,7 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
                 "rewind" -> handleRewind()
                 "forward" -> handleForward()
                 "shuffle" -> handleShuffleToggle()
-                "random" -> handleRandomTrack()
+                "repeat_toggle" -> handleRepeatToggle()
                 "seek_to" -> handleSeekTo(intent.getLongExtra(EXTRA_SEEK_POSITION, -1L))
             }
         } else {
@@ -156,14 +159,17 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
         serviceScope.launch {
             val activeRepo = ActiveSessionRepository(applicationContext)
             val musicRepo = MusicLibraryRepository(applicationContext)
+            val settingsRepo = SettingsRepository(applicationContext)
             val session = activeRepo.read()
             sessionSeed = session?.challengeSeed?.toLongOrNull() ?: SystemClock.elapsedRealtime()
+
+            defaultToneEnabled = settingsRepo.read().defaultToneEnabled
 
             val library = musicRepo.read()
             val enabledMusic = library.music.filter { it.enabled }
 
             if (enabledMusic.isEmpty()) {
-                playFallbackDrone()
+                if (defaultToneEnabled) playFallbackDrone() else stopSelf()
                 return@launch
             }
 
@@ -184,7 +190,7 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
     private fun playCurrentItem() {
         val player = player ?: return
         if (queue.isEmpty()) {
-            playFallbackDrone()
+            if (defaultToneEnabled) playFallbackDrone() else stopSelf()
             return
         }
 
@@ -274,7 +280,7 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
         consecutiveFailures++
         if (queue.isEmpty() || consecutiveFailures >= queue.size) {
             Log.w(TAG, "All queue items failed, falling back to default tone")
-            playFallbackDrone()
+            if (defaultToneEnabled) playFallbackDrone() else stopSelf()
             return
         }
         handleNext()
@@ -327,12 +333,11 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
         }
     }
 
-    private fun handleRandomTrack() {
-        if (queue.size <= 1) return
-        val otherIndices = queue.indices.filter { it != currentIdx }
-        currentIdx = otherIndices[Random().nextInt(otherIndices.size)]
-        updateActiveSessionIndex()
-        playCurrentItem()
+    /** Toggles between playing the queue in sequence and looping the current track (ExoPlayer handles the actual loop). */
+    private fun handleRepeatToggle() {
+        repeatCurrentTrack = !repeatCurrentTrack
+        player?.repeatMode = if (repeatCurrentTrack) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+        broadcastTrackChange()
     }
 
     private fun updateActiveSessionIndex() {
@@ -351,6 +356,7 @@ class PlaybackService : Service(), AudioManager.OnAudioFocusChangeListener {
             putExtra("isPlaying", player.isPlaying)
             putExtra("position", player.currentPosition)
             putExtra("duration", player.duration)
+            putExtra("repeatOne", repeatCurrentTrack)
             setPackage(packageName)
         }
         sendBroadcast(intent)
