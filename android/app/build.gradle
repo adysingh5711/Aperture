@@ -2,7 +2,8 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-def getVersionName() {
+// Named to avoid colliding with DefaultConfig.getVersionName() inside defaultConfig {}
+def readPackageVersion() {
     def matcher = (file("../../package.json").text =~ /"version":\s*"([^"]+)"/)
     return matcher[0][1]
 }
@@ -88,7 +89,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName getVersionName()
+        versionName readPackageVersion()
     }
     signingConfigs {
         debug {

@@ -26,6 +26,7 @@ export default function SettingsScreen() {
   const [difficulty, setDifficulty] = useState<string>('standard');
   const [themeMode, setThemeMode] = useState<ThemeMode>('system');
   const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -154,24 +155,6 @@ export default function SettingsScreen() {
         />
       </View>
 
-      {/* Privacy */}
-      <SectionLabel style={styles.sectionTitle}>Privacy policy</SectionLabel>
-      <View style={styles.card}>
-        <Text style={styles.bodyText}>
-          Aperture makes no network calls, has no account or login, and does not use analytics,
-          crash reporting, or third-party SDKs. Nothing you do in this app is ever transmitted
-          anywhere.{'\n\n'}
-          Your commitment history, active session state, app settings, and any music files you add
-          are stored only in this app's private storage on this device. Uninstalling the app or
-          using "Clear all data" in this screen permanently deletes all of it.{'\n\n'}
-          Aperture requests the Exact Alarm, Accessibility, Usage Access, Overlay, and Battery
-          Optimization permissions solely to reliably start and enforce the gate timer on this
-          device — none of them are used to collect or share data.{'\n\n'}
-          Since everything stays on-device, there is no server-side data to request or delete. Use
-          "Export journal" to get a copy of your own data, or "Clear all data" to remove it.
-        </Text>
-      </View>
-
       {/* About */}
       <SectionLabel style={styles.sectionTitle}>About</SectionLabel>
       <View style={styles.card}>
@@ -184,7 +167,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.row, styles.rowLast]}
-          onPress={() => Linking.openURL('https://github.com/adysingh5711')}
+          onPress={() => Linking.openURL('https://linkedin.com/in/singhaditya5711')}
         >
           <Text style={styles.rowLabel}>Contact me</Text>
           <ChevronRightIcon size={16} color={colors.textMuted} />
@@ -194,23 +177,36 @@ export default function SettingsScreen() {
       {/* Diagnostics */}
       <SectionLabel style={styles.sectionTitle}>Diagnostics</SectionLabel>
       <View style={styles.card}>
-        <View style={styles.row}>
+        <View style={[styles.row, styles.rowLast]}>
           <Text style={styles.rowLabel}>Version</Text>
           <Text style={styles.rowValue}>{diagnostics?.version ?? '—'}</Text>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Active session</Text>
-          <Text style={styles.rowValue}>{diagnostics?.activeSessionExists ? 'Yes' : 'None'}</Text>
-        </View>
-        <View style={[styles.row, styles.rowLast]}>
-          <Text style={styles.rowLabel}>Exact alarm permission</Text>
-          <View style={[styles.badge, diagnostics?.exactAlarmPermission ? styles.badgeOn : styles.badgeOff]}>
-            <Text style={diagnostics?.exactAlarmPermission ? styles.badgeTextOn : styles.badgeTextOff}>
-              {diagnostics?.exactAlarmPermission ? 'GRANTED' : 'DENIED'}
-            </Text>
-          </View>
-        </View>
       </View>
+
+      {/* Privacy (collapsed by default) */}
+      <TouchableOpacity style={styles.privacyHeader} onPress={() => setShowPrivacy(v => !v)}>
+        <SectionLabel style={[styles.sectionTitle, { marginBottom: 0 }]}>Privacy policy</SectionLabel>
+        <View style={{ transform: [{ rotate: showPrivacy ? '90deg' : '0deg' }] }}>
+          <ChevronRightIcon size={16} color={colors.textMuted} />
+        </View>
+      </TouchableOpacity>
+      {showPrivacy && (
+        <View style={styles.card}>
+          <Text style={styles.bodyText}>
+            Aperture makes no network calls, has no account or login, and does not use analytics,
+            crash reporting, or third-party SDKs. Nothing you do in this app is ever transmitted
+            anywhere.{'\n\n'}
+            Your commitment history, active session state, app settings, and any music files you add
+            are stored only in this app's private storage on this device. Uninstalling the app or
+            using "Clear all data" in this screen permanently deletes all of it.{'\n\n'}
+            Aperture requests the Exact Alarm, Accessibility, Usage Access, Overlay, and Battery
+            Optimization permissions solely to reliably start and enforce the gate timer on this
+            device — none of them are used to collect or share data.{'\n\n'}
+            Since everything stays on-device, there is no server-side data to request or delete. Use
+            "Export journal" to get a copy of your own data, or "Clear all data" to remove it.
+          </Text>
+        </View>
+      )}
 
       <DurationPickerSheet
         visible={showWaitPicker}
@@ -252,6 +248,11 @@ const makeStyles = (c: ThemeColors) =>
     sectionTitle: {
       marginTop: spacing.lg,
       marginBottom: spacing.sm,
+    },
+    privacyHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
     card: {
       paddingVertical: spacing.xs,
